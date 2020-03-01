@@ -1,1 +1,5 @@
 node_modules
+credentials.js
+seeding.js
+friendship.js
+jwt

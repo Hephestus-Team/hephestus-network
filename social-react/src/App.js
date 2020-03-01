@@ -1,16 +1,19 @@
 import React from 'react';
 
-import RegisterForm from './components/RegisterForm';
+import Routes from './routes';
 
-import './global.css';
-import './App.css';
+import './styles/fonts.css';
+import { GlobalStyle, AppContainer } from './styles/global';
 
 function App() {
 
   return (
-    <div id="app">
-      <RegisterForm />
-    </div>
+    <>
+      <GlobalStyle />
+      <AppContainer>
+        <Routes />
+      </AppContainer>
+    </>
   );
 }
 
