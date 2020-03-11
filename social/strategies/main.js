@@ -1,4 +1,4 @@
-const Account = require('../models/account'), jwt = require('jsonwebtoken'), jwtSecret = require('../jwt/config').jwtSecret;
+const Account = require('../models/account'), jwt = require('jsonwebtoken');
 
 const LocalStrategy = require('passport-local').Strategy, 
         JwtStrategy = require('passport-jwt').Strategy, 
@@ -6,7 +6,7 @@ const LocalStrategy = require('passport-local').Strategy,
 
 var opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: jwtSecret,
+    secretOrKey: require('../credentials/cfg').jwt.jwtSecret,
 }
 
 exports.signin = new LocalStrategy({usernameField: 'email', passwordField: 'hash'}, (email, password, done) => {

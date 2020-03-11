@@ -1,7 +1,7 @@
 const express = require('express'), app = express();
-const Cors = require('cors'), passport = require('passport'), strategy = require('./strategies/main');
+const Cors = require('cors'), passport = require('passport'), strategy = require('./strategies/main'), morgan = require('./dev/morgan');
 
-app.use(require('morgan')('dev'));
+app.use(morgan.morganChalk);
 app.use(require('helmet')());
 app.use(Cors('http://localhost:3000'));
 
