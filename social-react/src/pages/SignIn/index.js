@@ -60,13 +60,13 @@ const SignIn = () => {
   return (
     <Form ref={formRef} onSubmit={handleSubmit}>
       <div className="input-group-flex">
-        <InputForm name="email" type="email" labelText="E-mail" />
+        <InputForm name="email" type="email" labelText="E-mail"/>
       </div>
       <div className="input-group-flex">
-        <InputForm name="hash" type="password" labelText="Password" />
+        <InputForm name="hash" type="password" labelText="Password"/>
       </div>
         
-      <button type="submit">Sign In</button>
+      <button type="submit" formNoValidate>Sign In</button>
 
       <div className="registerContainer">
         <Link to="/register">

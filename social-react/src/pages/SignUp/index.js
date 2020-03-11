@@ -8,7 +8,7 @@ import { login } from '../../services/auth';
 
 import { Form } from './styles';
 
-const SignUp = (props) => {
+const SignUp = () => {
 
   const [gender, setGender] = useState('m');
 
@@ -131,7 +131,7 @@ const SignUp = (props) => {
           </div>
         </div>
 
-        <button type="submit">Register</button>
+        <button type="submit" formNoValidate >Register</button>
       </Form>
   );
 }
