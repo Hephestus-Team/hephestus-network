@@ -17,3 +17,7 @@ exports.signup = (req, res, next) => {
         return res.status(200).send({message: {email: 'User already exists'}});
     });
 }
+
+exports.socketio = (req, res, next) => {
+    res.render('index');
+}

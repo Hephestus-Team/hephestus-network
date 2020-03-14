@@ -3,3 +3,4 @@ credentials
 seeding.js
 friendship.js
 jwt
+views

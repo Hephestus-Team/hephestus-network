@@ -1,6 +1,6 @@
-const mongoose = require('mongoose'), bcrypt = require('bcrypt');
+const mongoose = require('mongoose'), bcrypt = require('bcrypt'), jwt = require('jsonwebtoken');
 
-var accountSchema = mongoose.Schema({
+let accountSchema = mongoose.Schema({
     first_name: String,
     last_name: String,
     email: {
@@ -23,6 +23,10 @@ accountSchema.statics.setHash = function(password) {
 
 accountSchema.statics.verifyHash = function(password, hash) {
     return bcrypt.compareSync(password, hash);
+}
+
+accountSchema.statics.verifyJwt = function(jwt) {
+    return 
 }
 
 var Account = mongoose.model('Account', accountSchema);
