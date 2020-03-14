@@ -1,5 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+
 import { Chat, NavBar, FriendList } from './styles';
+
+import { receiveNewMessage, sendNewMessage, connect, disconnect } from '../../services/socket.js';
 
 import searchIcon from '../../assets/icons/searchIcon.svg';
 import logoutIcon from '../../assets/icons/logoutIcon.svg';
@@ -7,6 +10,12 @@ import logoutIcon from '../../assets/icons/logoutIcon.svg';
 const Home = () => {
 
     const chat = useRef(null);
+
+    const [chatMessages, setChatMessages] = useState([]);
+
+    useEffect(() => {
+        receiveNewMessage(messageText => setChatMessages([...chatMessages, {messageText, type: 0}]));
+    }, [chatMessages])
 
     const changeChatExpansion = (chatStyle) => {
         const elements = Array.from(chat.current.children).filter((element) => element.nodeName !== "HEADER");
@@ -21,17 +30,15 @@ const Home = () => {
         }         
     };
 
+    const handleNewSendMessage = (messageText) => {
+        sendNewMessage(messageText);
+        setChatMessages([...chatMessages, {messageText, type: 1}]);
+    };
+
     return (
         <>
             <NavBar>
-                <ul>
-                    <li>
-                        <button>
-                            <img src={logoutIcon} alt="."/>
-                            Logout
-                        </button>
-                    </li>
-                
+                <ul>         
                     <li>
                         <p>Shinzein</p>
                     </li>
@@ -41,6 +48,12 @@ const Home = () => {
                             <input type="text"/>
                             <img src={searchIcon} alt="."/>
                         </div>
+                    </li>
+                    <li>
+                        <button>
+                            <img src={logoutIcon} alt="."/>
+                            Logout
+                        </button>
                     </li>
                 </ul>
             </NavBar>
@@ -136,50 +149,11 @@ const Home = () => {
                     </strong>
                 </header>
                 <section>
-                    <div>
-                        <p className='friendMsg'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='user'>Olá arawr raw wr aw a awra asrasrae ad asfsetatea</p>
-                    </div>
-                    <div>
-                        <p className='friendMsg'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='user'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='friendMsg'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='user'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='friendMsg'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='user'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='friendMsg'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='user'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='friendMsg'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='user'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='friendMsg'>Olá</p>
-                    </div>
-                    <div>
-                        <p className='user'>Olá</p>
-                    </div>
+                    { chatMessages.map(messageInfo => 
+                        messageInfo.type == 1 ? <div><p className='user'>{messageInfo.message}</p></div> :
+                            <div><p className='friendMsg'>{messageInfo.message}</p></div>) }
                 </section>
-                <input type="text" placeholder="Type a Message"/>
+                <input type="text" placeholder="Type a Message" onKeyPress={(e) => { if(e.which == 13) handleNewSendMessage(e.target.value)}}/>
             </Chat>
         </>
     );

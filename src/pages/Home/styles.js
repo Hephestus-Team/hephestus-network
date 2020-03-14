@@ -26,7 +26,7 @@ export const NavBar = styled.nav`
     }
 
     ul li {
-        margin: 0 4vw;
+        margin-left: 4vw;
 
         display: flex;
         flex-direction: row;
@@ -63,6 +63,11 @@ export const NavBar = styled.nav`
         height: 2rem;
     }
 
+    ul li:last-child button {
+        margin-left: auto;
+        margin-right: 2vw;
+    }
+
     ul li button {
         display: flex;
         justify-content: flex-start;
@@ -70,7 +75,7 @@ export const NavBar = styled.nav`
 
         border: 0;
         border-radius: 2px;
-        background: #05ade0;
+        background: #2979FF;
         padding: 8px 15px;
 
         font-size: 16px;
@@ -82,7 +87,7 @@ export const NavBar = styled.nav`
     }
 
     ul li button:hover {
-        background: #1391b8;
+        background: #05ade0;
     }
 
     ul li button img {
@@ -111,7 +116,11 @@ export const NavBar = styled.nav`
 
         ul {
             display: grid;
-    	    grid-template-columns: 1fr 1fr 3fr;
+    	    grid-template-columns: 1fr 3fr 1fr;
+        }
+
+        ul li:last-child button {
+            margin: 0;
         }
     }
 
@@ -123,7 +132,7 @@ export const NavBar = styled.nav`
 
         ul {
             display: grid;
-    	    grid-template-columns: 1fr 1fr 3fr;
+    	    grid-template-columns: 1fr 3fr 1fr;
         }
     }
 `;
