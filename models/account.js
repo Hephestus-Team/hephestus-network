@@ -1,6 +1,13 @@
-const mongoose = require('mongoose'), bcrypt = require('bcrypt'), jwt = require('jsonwebtoken');
+const mongoose = require('mongoose'), bcrypt = require('bcrypt'), jwt = require('jsonwebtoken'), uniqid = require('uniqid');
+
+let friendshipSchema = mongoose.Schema({
+    _id: String,
+    friend: String,
+    created_at: { type: Date, default: Date.now }
+}, { _id: false });
 
 let accountSchema = mongoose.Schema({
+    uniqid: String,
     first_name: String,
     last_name: String,
     email: {
@@ -13,21 +20,34 @@ let accountSchema = mongoose.Schema({
         enum: ['m', 'f']
     },
     birthday: Date,
-    friendship: [mongoose.ObjectId],
-    hash: String
+    friendship: [friendshipSchema],
+    hash: String,
+    created_at: { type: Date, default: Date.now }
 });
 
-accountSchema.statics.setHash = function(password) {
+accountSchema.statiscs.setFriendshipUniqid = function setId(user1, user2){
+    return {
+        _id: uniqid(`${user1.toLowerCase()}-${user2.toLowerCase()}.`),
+        friend: user2
+    }
+}
+
+accountSchema.statics.setHash = function setHash(password) {
     return bcrypt.hashSync(password, 10);
 }
 
-accountSchema.statics.verifyHash = function(password, hash) {
+accountSchema.statics.verifyHash = function verifyHash(password, hash) {
     return bcrypt.compareSync(password, hash);
 }
 
-accountSchema.statics.verifyJwt = function(jwt) {
-    return 
+accountSchema.statics.setUniqid = function setUniqid(first_name) {
+    return uniqid(`${first_name.toLowerCase()}.`);
 }
+
+// Probably delete in next commits
+// accountSchema.statics.retrieveUser = function retrieveUser(jwt) {
+//     return jwt.decode(jwt).id;
+// }
 
 var Account = mongoose.model('Account', accountSchema);
 

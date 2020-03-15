@@ -2,7 +2,7 @@ const express = require('express'), app = express(),
 	Cors = require('cors'), passport = require('passport'),
 	strategy = require('./strategies/main'), morgan = require('./dev/morgan'),
 	helmet = require('helmet');
-	//  handlebars = require('express-handlebars').create({
+	//  const handlebars = require('express-handlebars').create({
 	// 	defaultLayout: 'main',
 	// 	helpers: {
 	// 		section: function(name, options){
@@ -30,7 +30,7 @@ passport.use(strategy.jwt);
 require('./routes/main')(app, passport, require('./handlers/main'));
 
 app.use((req, res, next) => {
-	res.status(404).send({message: "This page doesnt exists"});
+	res.status(404).send({message: "This page does not exists"});
 });
 
 app.use((req, res, next) => {

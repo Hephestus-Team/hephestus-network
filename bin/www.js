@@ -1,6 +1,6 @@
 const app = require('../app'), https = require('https'), 
 mongoose = require('mongoose'), fs = require('fs'), 
-path = require('path');
+path = require('path'), websocket = require('../websocket');
 
 app.set('port', normalizePort(process.env.PORT || '3333'));
 app.set('env', process.env.ENV || 'development');
@@ -16,7 +16,8 @@ mongoose.connect(require('../credentials/cfg.js').mongo.connection, require('../
 	if(err) console.log(`Mongoose connection error <${err}>`);
 });
 
-// require('./websocket.js')(server);
+// Socket.IO server-side system, in process..
+// websocket(server);
 
 server.listen(app.get('port'), () => {
 	console.log('Express server started in ' + app.get('env') +
