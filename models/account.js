@@ -3,6 +3,7 @@ const mongoose = require('mongoose'), bcrypt = require('bcrypt'), jwt = require(
 let friendshipSchema = mongoose.Schema({
     _id: String,
     friend: String,
+    accepted: Boolean,
     created_at: { type: Date, default: Date.now }
 }, { _id: false });
 
@@ -25,10 +26,19 @@ let accountSchema = mongoose.Schema({
     created_at: { type: Date, default: Date.now }
 });
 
-accountSchema.statiscs.setFriendshipUniqid = function setId(user1, user2){
+accountSchema.statics.setFriendshipUniqid = function setId(user1, user2){
+    friendship_uniqid = uniqid(`${user1.first_name.toLowerCase()}-${user2.first_name.toLowerCase()}.`);
     return {
-        _id: uniqid(`${user1.toLowerCase()}-${user2.toLowerCase()}.`),
-        friend: user2
+        sender: {
+            _id: friendship_uniqid,
+            accepted: false,
+            friend: user2.uniqid
+        },
+        receiver: {
+            _id: friendship_uniqid,
+            accepted: false,
+            friend: user1.uniqid
+        }
     }
 }
 

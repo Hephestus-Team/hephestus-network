@@ -12,7 +12,7 @@ const options = {
 
 let server = https.createServer(options, app);
 
-mongoose.connect(require('../credentials/cfg.js').mongo.connection, require('../credentials/cfg.js').mongo.options, (err) => {
+mongoose.connect(require('../credentials/cfg').mongo.uri, require('../credentials/cfg').mongo.options, (err) => {
 	if(err) console.log(`Mongoose connection error <${err}>`);
 });
 

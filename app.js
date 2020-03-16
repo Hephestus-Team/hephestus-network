@@ -1,6 +1,5 @@
 const express = require('express'), app = express(),
-	Cors = require('cors'), passport = require('passport'),
-	strategy = require('./strategies/main'), morgan = require('./dev/morgan'),
+	Cors = require('cors'), morgan = require('./dev/morgan'),
 	helmet = require('helmet');
 	//  const handlebars = require('express-handlebars').create({
 	// 	defaultLayout: 'main',
@@ -24,10 +23,7 @@ app.use(Cors('http://localhost:3000'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-passport.use(strategy.signin);
-passport.use(strategy.jwt);
-
-require('./routes/main')(app, passport, require('./handlers/main'));
+require('./routes/main')(app, require('./handlers/main'));
 
 app.use((req, res, next) => {
 	res.status(404).send({message: "This page does not exists"});
