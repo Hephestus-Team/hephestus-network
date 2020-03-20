@@ -20,7 +20,7 @@ mongoose.connect(require('../credentials/cfg').mongo.uri, require('../credential
 // websocket(server);
 
 server.listen(app.get('port'), () => {
-	console.log('Express server started in ' + app.get('env') +
+	console.log('API server started in ' + app.get('env') +
 		' mode on https://localhost:' + app.get('port') +
 		' ; press Ctrl-C to terminate.');
 });
