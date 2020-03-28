@@ -11,11 +11,11 @@ module.exports = (app, handlers) => {
 
     app.get('/profile', handlers.jwt, handlers.feed);
 
-    /* Actually using HEADER to pass user's uniqid */
-    app.get('/add', handlers.jwt, handlers.add);
+    app.post('/add', handlers.jwt, handlers.add);
 
-    app.get('/accept', handlers.jwt, handlers.accept);
+    app.post('/accept', handlers.jwt, handlers.accept);
 
-    app.get('/refuse', handlers.jwt, handlers.refuse);
-
+    app.post('/refuse', handlers.jwt, handlers.refuse);
+    
+    app.post('/publish', handlers.jwt, handlers.publish);
 }

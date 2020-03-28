@@ -1,6 +1,5 @@
 node_modules
 credentials
 seeding.js
-friendship.js
 jwt
 views

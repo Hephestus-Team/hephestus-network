@@ -1,11 +1,5 @@
-const mongoose = require('mongoose'), bcrypt = require('bcrypt'), jwt = require('jsonwebtoken'), uniqid = require('uniqid');
-
-let friendshipSchema = mongoose.Schema({
-    _id: String,
-    friend: String,
-    accepted: Boolean,
-    created_at: { type: Date, default: Date.now }
-}, { _id: false });
+const mongoose = require('mongoose'), bcrypt = require('bcrypt'), 
+uniqid = require('uniqid'), subdocument = require('./subdocument');
 
 let accountSchema = mongoose.Schema({
     uniqid: String,
@@ -21,22 +15,25 @@ let accountSchema = mongoose.Schema({
         enum: ['m', 'f']
     },
     birthday: Date,
-    friendship: [friendshipSchema],
+    friendship: [subdocument.Friendship],
     hash: String,
+    post: [subdocument.Post],
     created_at: { type: Date, default: Date.now }
 });
 
-accountSchema.statics.setFriendshipUniqid = function setId(user1, user2){
-    friendship_uniqid = uniqid(`${user1.first_name.toLowerCase()}-${user2.first_name.toLowerCase()}.`);
+accountSchema.statics.setFriendship = function setId(user1, user2){
+    friendship_uniqid = uniqid();
     return {
         sender: {
             _id: friendship_uniqid,
-            accepted: false,
+            is_accepted: false,
+            is_sender: true,
             friend: user2.uniqid
         },
         receiver: {
             _id: friendship_uniqid,
-            accepted: false,
+            is_accepted: false,
+            is_sender: false,
             friend: user1.uniqid
         }
     }
@@ -50,14 +47,15 @@ accountSchema.statics.verifyHash = function verifyHash(password, hash) {
     return bcrypt.compareSync(password, hash);
 }
 
-accountSchema.statics.setUniqid = function setUniqid(first_name) {
-    return uniqid(`${first_name.toLowerCase()}.`);
+accountSchema.statics.setUniqid = function setUniqid(type) {
+    if(type === 'user'){
+        return uniqid();
+    }else if(type === 'post'){
+        return uniqid.time();
+    }else{
+        throw new Error('Cannot proccess type');
+    }
 }
-
-// Probably delete in next commits
-// accountSchema.statics.retrieveUser = function retrieveUser(jwt) {
-//     return jwt.decode(jwt).id;
-// }
 
 var Account = mongoose.model('Account', accountSchema);
 
