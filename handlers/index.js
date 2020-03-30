@@ -1,4 +1,4 @@
-var Account = require('../models/account'), passport = require('passport'), strategy = require('../strategies');
+let Account = require('../models/account'), passport = require('passport'), strategy = require('../strategies');
 
 passport.use(strategy.signin);
 passport.use(strategy.jwt);
@@ -7,9 +7,9 @@ exports.signup = (req, res, next) => {
     Account.findOne({email: req.body.email}, (err, account) =>{
         if(err) { return console.log(err); }
         if(account) { return res.status(409).send({message: {email: 'User already exists'}}); }
-
+        console.log(req.body);
         new Account({
-            uniqid: Account.setUniqid(req.body.first_name),
+            uniqid: Account.setUniqid('user'),
             first_name: req.body.first_name,
             last_name: req.body.last_name,
             email: req.body.email,
@@ -42,39 +42,37 @@ exports.jwt = (req, res, next) => {
     })(req, res, next);
 }
 
-//Check TODO in /routes
-exports.add = (req, res, next) => { 
-    if(/^[a-zA-Z0-9]\w+$/.test(req.body.receiver)){
+exports.add = (req, res, next) => {
+    if (/^[a-zA-Z0-9]\w+$/.test(req.body.receiver)) {
 
-        Account.findOne({uniqid: {$in: [req.body.sender, req.body.receiver]}, "friendship.friend": {$in: [req.body.sender, req.body.receiver]}}, (err, account) => {
-            if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
-            if(account){ return res.status(422).send({message: {user: 'A friendship request already exists'}}); }
-
-            Account.findOne({uniqid: req.body.receiver}, (err, account) => {
-                if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
-                if(!account){ return res.status(303).send({message: {user: 'User do not exist'}}); }
-    
-                Account.find({uniqid: {$in: [req.body.sender, req.body.receiver]}}, (err, accounts) => {
-                    if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
-
-                    friendship_uniqid = Account.setFriendship(accounts[0], accounts[1]);
-
-                    accounts[0].friendship = friendship_uniqid.sender;
-                    accounts[1].friendship = friendship_uniqid.receiver;
-
-                    /* USE UPDATE INSTEAD OF SAVE */
-                    accounts.forEach((account, index, accounts) => {
-                        account.update({"friendship._id": {$eq: account.friendship[index]._id}}, accounts[index], (err, account) => {
-                            if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
-                        });
-                    });
-                    
-                    return res.status(201).send({message: {friendship: 'You sended a friendship request'}});
-                });
-            });
+        let friendship_exists = Account.findOne({uniqid: {$in: [req.body.sender, req.body.receiver]}, "friendship.friend": {$in: [req.body.sender, req.body.receiver]}}, (err, account) => {
+            if (err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' } }); }
+            if (account) { return true; }
+            return false;
         });
-    }else{
-        res.status(422).send({message: {uniqid: 'Cannot process user id'}});
+        
+        if(!friendship_exists){
+            Account.find({uniqid: {$in: [req.body.sender, req.body.receiver]}}, (err, accounts) => {
+                if (err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' } }); }
+    
+                friendship_uniqid = Account.setFriendship(accounts[0], accounts[1]);
+    
+                accounts[0].friendship = friendship_uniqid.sender;
+                accounts[1].friendship = friendship_uniqid.receiver;
+    
+                accounts.forEach((account, index, accounts) => {
+                    account.update({"friendship._id": {$eq: accounts[index].friendship._id}}, accounts[index], (err, account) => {
+                        if (err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' } }); }
+                    });
+                });
+    
+                return res.status(201).send({ message: { friendship: 'You sended a friendship request' } });
+            });
+        }else{
+            res.status(422).send({ message: { user: 'A friendship request already exists' } });
+        }
+    } else {
+        res.status(422).send({ message: { uniqid: 'Cannot process user id' } });
     }
 }
 
@@ -106,7 +104,7 @@ exports.accept = (req, res, next) => {
 
 exports.refuse = (req, res, next) => {
     if(/^[a-zA-Z0-9]\w+$/.test(req.body.receiver)){
-        Account.findOne({uniqid: req.body.receiver, "friendship.friend": req.body.sender}, (err, account) => {
+        Account.findOne({uniqid: req.body.receiver, "friendship.friend": req.body.sender, "friendship.is_accepted": false}, (err, account) => {
             if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'Friendship does not exist'}}); }
 
@@ -120,18 +118,6 @@ exports.refuse = (req, res, next) => {
     }else{
         res.status(422).send({message: {uniqid: 'Cannot process user id'}});
     }
-}
-
-//TODO
-/* If send user data through signin this handler will be obsolete */
-/* Send friends first_name and last_name too, do it querying or add this in friendship schema */
-exports.feed = (req, res, next) => {
-    Account.findOne({uniqid: req.header('u')}, { hash: 0, birthday: 0, created_at: 0, gender: 0, email: 0, __v: 0, _id: 0 }, (err, account) => {
-        if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
-        if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
-
-        res.status(200).send(account);
-    });
 }
 
 exports.publish = (req, res, next) => {
@@ -148,6 +134,28 @@ exports.publish = (req, res, next) => {
     });
 }
 
-exports.like = (req, res, next) => {
-    
+exports.profile = (req, res, next) => {
+    if(req.header('u') === req.params.uniqid || req.params.uniqid === undefined){
+        Account.findOne({uniqid: {$in: [req.params.uniqid, req.header("u")]}}, { hash: 0, created_at: 0, email: 0, __v: 0, _id: 0 }, (err, account) => {
+            if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
+            if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
+            account.is_user = false;
+            Account.getFriend(Account, account.friendship, (friends) => {
+                account.friends = friends;
+                delete account.friendship;
+                return res.status(200).send(account);
+            });
+        });
+    }else{
+        Account.findOne({uniqid: req.params.uniqid}, { hash: 0, created_at: 0, email: 0, __v: 0, _id: 0 }, {lean: true}, (err, account) => {
+            if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
+            if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
+            account.is_user = false;
+            Account.getFriend(Account, account.friendship, (friends) => {
+                account.friends = friends;
+                delete account.friendship;
+                return res.status(200).send(account);
+            });            
+        });
+    }
 }

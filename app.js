@@ -20,6 +20,7 @@ app.use(Cors('http://localhost:3000'));
 // app.engine('handlebars', handlebars.engine);
 // app.set('view engine', 'handlebars');
 
+/* Need to use form-data for Postman */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

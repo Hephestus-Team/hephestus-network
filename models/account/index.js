@@ -57,6 +57,28 @@ accountSchema.statics.setUniqid = function setUniqid(type) {
     }
 }
 
+accountSchema.statics.getFriend = function getFriend(Account, friendships, cb) {
+
+    let friends_uniqid = [];
+    var friends = [];
+
+    friendships.forEach((friendship, index, friendships) => {
+        friends_uniqid.push(friendship.friend);
+    });
+
+    Account.find({uniqid: {$in: friends_uniqid}}, {hash: 0, created_at: 0, email: 0, __v: 0, _id: 0, birthday: 0, friendship: 0, gender: 0}, {lean: true}, (err, accounts) => {
+        if(err) { return console.log(err); }
+        if(!accounts) { return false; }
+        accounts.forEach((account, index, accounts) => {
+            friends.push({
+                uniqid: account.uniqid,
+                name: `${account.first_name} ${account.last_name}`
+            });
+        });
+        cb(friends);
+    });
+}
+
 var Account = mongoose.model('Account', accountSchema);
 
 module.exports = Account;

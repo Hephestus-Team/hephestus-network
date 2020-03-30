@@ -7,9 +7,9 @@ module.exports = (app, handlers) => {
 
     app.post('/signin', handlers.local);
 
-    app.get('/feed', handlers.jwt, handlers.feed);
+    app.get('/profile', handlers.jwt, handlers.profile);
 
-    app.get('/profile', handlers.jwt, handlers.feed);
+    app.get('/u/(:uniqid)?', handlers.jwt, handlers.profile);
 
     app.post('/add', handlers.jwt, handlers.add);
 
