@@ -17,6 +17,7 @@ let likeSchema = new mongoose.Schema({
 /* Add reply property if the comment is a reply to another comment */
 let commentSchema = new mongoose.Schema({
     uniqid: String,
+    content: String,
     like: [likeSchema],
     user: String,
     created_at: { type: Date, default: Date.now }

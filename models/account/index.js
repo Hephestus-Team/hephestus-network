@@ -28,13 +28,13 @@ accountSchema.statics.setFriendship = function setId(user1, user2){
             _id: friendship_uniqid,
             is_accepted: false,
             is_sender: true,
-            friend: user2.uniqid
+            friend: user1.uniqid
         },
         receiver: {
             _id: friendship_uniqid,
             is_accepted: false,
             is_sender: false,
-            friend: user1.uniqid
+            friend: user2.uniqid
         }
     }
 }
@@ -76,6 +76,14 @@ accountSchema.statics.getFriend = function getFriend(Account, friendships, cb) {
             });
         });
         cb(friends);
+    });
+}
+
+accountSchema.statics.getFriendship = function getFriendship(Account, users, cb){
+    Account.findOne({uniqid: {$in: users}, "friendship.friend": {$in: users}}, (err, account) => {
+        if (err) { return err; }
+        if (account) { return true; }
+        return false;
     });
 }
 

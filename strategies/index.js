@@ -15,7 +15,17 @@ exports.signin = new LocalStrategy({usernameField: 'email', passwordField: 'hash
         if(!account) { return done(null, false, {message: {user: 'User not found'}}); }
         if(!Account.verifyHash(password, account.hash)) { return done(null, false, {message: {hash: 'Incorrect password'}}); }
         let id = account._id;
-        return done(null, account, {token: 'Bearer ' + jwt.sign({id}, require('../credentials/cfg').jwt.jwtSecret, {expiresIn: "5 days"}), uniqid: account.uniqid});
+
+        let token = 'Bearer ' + jwt.sign({id}, require('../credentials/cfg').jwt.jwtSecret);
+
+        let user = {
+            token: token,
+            uniqid: account.uniqid,
+            first_name: account.first_name,
+            last_name: account.last_name,
+            friendship: account.friendship
+        }
+        return done(null, account, user);
     });
 });
 

@@ -14,7 +14,7 @@ const express = require('express'), app = express(),
 
 app.use(morgan.morganChalk);
 app.use(helmet());
-app.use(Cors('http://localhost:3000'));
+app.use(Cors('localhost:3000'));
 
 // app.use(express.static(__dirname + '/public'));
 // app.engine('handlebars', handlebars.engine);

@@ -18,4 +18,8 @@ module.exports = (app, handlers) => {
     app.post('/refuse', handlers.jwt, handlers.refuse);
     
     app.post('/publish', handlers.jwt, handlers.publish);
+
+    app.post('/like/:type', handlers.jwt, handlers.like);
+
+    app.post('/comment', handlers.jwt, handlers.comment);
 }

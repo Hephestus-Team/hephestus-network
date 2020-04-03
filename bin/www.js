@@ -1,6 +1,6 @@
 const app = require('../app'), https = require('https'), 
 mongoose = require('mongoose'), fs = require('fs'), 
-path = require('path'), websocket = require('../websocket');
+path = require('path'), websocket = require('../websocket'), http = require('http');
 
 app.set('port', normalizePort(process.env.PORT || '3333'));
 app.set('env', process.env.ENV || 'development');
