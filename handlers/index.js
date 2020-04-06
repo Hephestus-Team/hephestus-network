@@ -121,10 +121,10 @@ exports.refuse = (req, res, next) => {
 
 exports.profile = (req, res, next) => {
     if(req.header('u') === req.params.uniqid || req.params.uniqid === undefined){
-        Account.findOne({uniqid: {$in: [req.params.uniqid, req.header("u")]}}, { hash: 0, created_at: 0, email: 0, __v: 0, _id: 0 }, (err, account) => {
+        Account.findOne({uniqid: {$in: [req.params.uniqid, req.header("u")]}}, { hash: 0, created_at: 0, __v: 0, _id: 0 }, (err, account) => {
             if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
-            account.is_user = false;
+            account.is_user = true;
             Account.getFriend(Account, account.friendship, (friends) => {
                 account.friends = friends;
                 delete account.friendship;
@@ -132,7 +132,7 @@ exports.profile = (req, res, next) => {
             });
         });
     }else{
-        Account.findOne({uniqid: req.params.uniqid}, { hash: 0, created_at: 0, email: 0, __v: 0, _id: 0 }, {lean: true}, (err, account) => {
+        Account.findOne({uniqid: req.params.uniqid}, { hash: 0, created_at: 0, __v: 0, _id: 0 }, {lean: true}, (err, account) => {
             if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
             account.is_user = false;
@@ -149,6 +149,7 @@ exports.publish = (req, res, next) => {
     let post = {
         uniqid: Account.setUniqid('post'),
         content: req.body.content,
+        name: req.body.name
     }
 
     Account.findOneAndUpdate({uniqid: req.body.sender}, {$push: {post: post}}, (err, account) => {
@@ -165,7 +166,8 @@ exports.comment = (req, res, next) => {
     let comment = {
         uniqid: Account.setUniqid('post'),
         content: req.body.content,
-        user: req.body.sender
+        user: req.body.sender,
+        name: req.body.name
     }
 
     Account.findOneAndUpdate({uniqid: req.body.poster, "post.uniqid": req.body.post}, {$push: {"post.0.comment": comment}}, (err, account) => {
@@ -180,7 +182,8 @@ exports.comment = (req, res, next) => {
 
 exports.like = (req, res, next) => {
     let like = {
-        user: req.body.sender
+        user: req.body.sender,
+        name: req.body.name
     }
 
     if(req.params.type === 'comment'){
@@ -201,4 +204,10 @@ exports.like = (req, res, next) => {
         res.status(422).send({message: {type: 'Cannot process query type'}});
     }
 
+}
+
+exports.share = (req, res, next) => {
+    // Account.findOne({uniqid: req.body.poster, "post.uniqid": req.body.post}, (err, account) => {
+    //     Account.findOne({})
+    // });
 }

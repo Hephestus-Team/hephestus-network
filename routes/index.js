@@ -22,4 +22,6 @@ module.exports = (app, handlers) => {
     app.post('/like/:type', handlers.jwt, handlers.like);
 
     app.post('/comment', handlers.jwt, handlers.comment);
+
+    app.post('/share', handlers.jwt, handlers.share);
 }

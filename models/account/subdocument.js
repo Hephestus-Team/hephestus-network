@@ -10,22 +10,32 @@ let friendshipSchema = mongoose.Schema({
 
 let likeSchema = new mongoose.Schema({
     user: String,
+    name: String,
     created_at: { type: Date, default: Date.now }
+});
+
+let shareSchema = new mongoose.Schema({
+    post: String,
+    user: String
 });
 
 //TODO
 /* Add reply property if the comment is a reply to another comment */
 let commentSchema = new mongoose.Schema({
     uniqid: String,
+    user: String,
+    name: String,
     content: String,
     like: [likeSchema],
-    user: String,
     created_at: { type: Date, default: Date.now }
 }, { _id: false });
 
 let postSchema = mongoose.Schema({
     uniqid: String,
+    name: String,
     content: String,
+    is_shared: Boolean,
+    share: shareSchema,
     like: [likeSchema],
     comment: [commentSchema],
     visibility: { type: Number, default: 1},
