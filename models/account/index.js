@@ -15,9 +15,9 @@ let accountSchema = mongoose.Schema({
         enum: ['m', 'f']
     },
     birthday: Date,
-    friendship: [subdocument.Friendship],
+    friendships: [subdocument.Friendship],
     hash: String,
-    post: [subdocument.Post],
+    posts: [subdocument.Post],
     created_at: { type: Date, default: Date.now }
 });
 

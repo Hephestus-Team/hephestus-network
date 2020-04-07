@@ -18,8 +18,6 @@ exports.signup = (req, res, next) => {
             hash: Account.setHash(req.body.hash)
         }).save(null, (err, account) => {
             if(err){ return console.log(err); }
-            // debugg
-            console.log(account);
         });
 
         return res.status(201).send({message: {user: 'You are now part of the community'}});
@@ -58,17 +56,17 @@ exports.add = (req, res, next) => {
     
             friendship_uniqid = Account.setFriendship(accounts[0], accounts[1]);
     
-            accounts[0].friendship = friendship_uniqid.sender;
-            accounts[1].friendship = friendship_uniqid.receiver;
+            accounts[0].friendships = friendship_uniqid.sender;
+            accounts[1].friendships = friendship_uniqid.receiver;
     
             accounts.forEach((account, index, accounts) => {
-                Account.findOneAndUpdate({uniqid: account.uniqid}, {$push: {friendship: account.friendship}}, (err, account) => {
+                Account.findOneAndUpdate({uniqid: account.uniqid}, {$push: {friendships: account.friendship}}, (err, account) => {
                     if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
                     if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
                 });
             });
     
-            return res.status(201).send({ message: { friendship: 'You sended a friendship request' } });
+            return res.status(201).send({ message: { friendships: 'You sended a friendship request' } });
         });
     } else {
         res.status(422).send({ message: { uniqid: 'Cannot process user id' } });
@@ -77,19 +75,19 @@ exports.add = (req, res, next) => {
 
 exports.accept = (req, res, next) => {
 
-    let is_sender = Account.findOne({uniqid: req.body.receiver, "friendship.friend": req.body.sender, "friendship.is_sender": true}, (err, account) => {
+    let is_sender = Account.findOne({uniqid: req.body.receiver, "friendships.friend": req.body.sender, "friendships.is_sender": true}, (err, account) => {
         if(err) { console.log(err); res.status(500).send({ message: { database: 'Internal error' }}); }
         if(!account) { return false }
         return true;
     });
 
     if(!is_sender){
-        Account.findOne({uniqid: req.body.receiver, "friendship.friend": req.body.sender}, (err, account) => {
+        Account.findOne({uniqid: req.body.receiver, "friendships.friend": req.body.sender}, (err, account) => {
             if(err) { console.log(err); res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'Request does not exist'}}); }
-            console.log(account.friendship[0]);
+            console.log(account.friendships[0]);
 
-            Account.updateMany({"friendship._id": {$eq: account.friendship[0]._id}}, {$set: {"friendship.0.accepted": true}, $unset: {sender: ""}}, (err, account) => {
+            Account.updateMany({"friendships._id": {$eq: account.friendships[0]._id}}, {$set: {"friendships.0.accepted": true}, $unset: {sender: ""}}, (err, account) => {
                 if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
                 if(!account) { return res.status(409).send({message: {user: 'Friendship request does not exist'}}); }
                 return res.status(201).send({message: {friendship: 'Now you are friends'}});
@@ -103,11 +101,11 @@ exports.accept = (req, res, next) => {
 
 exports.refuse = (req, res, next) => {
     if(/^[a-zA-Z0-9]\w+$/.test(req.body.receiver)){
-        Account.findOne({uniqid: req.body.receiver, "friendship.friend": req.body.sender, "friendship.is_accepted": false}, (err, account) => {
+        Account.findOne({uniqid: req.body.receiver, "friendships.friend": req.body.sender, "friendships.is_accepted": false}, (err, account) => {
             if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'Friendship does not exist'}}); }
 
-            Account.updateMany({"friendship._id": {$eq: account.friendship[0]._id}}, {$pull: {"friendship.friend": {$in: [req.body.sender, req.body.receiver]}}}, (err, account) => {
+            Account.updateMany({"friendships._id": {$eq: account.friendships[0]._id}}, {$pull: {"friendships.friend": {$in: [req.body.sender, req.body.receiver]}}}, (err, account) => {
                 if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
                 if(!account) { return res.status(409).send({message: {user: 'Friendship request does not exist'}}); }
                 return res.status(201).send({message: {friendship: 'You do not accepted the request'}});
@@ -125,7 +123,7 @@ exports.profile = (req, res, next) => {
             if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
             account.is_user = true;
-            Account.getFriend(Account, account.friendship, (friends) => {
+            Account.getFriend(Account, account.friendships, (friends) => {
                 account.friends = friends;
                 delete account.friendship;
                 return res.status(200).send(account);
@@ -136,9 +134,9 @@ exports.profile = (req, res, next) => {
             if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
             account.is_user = false;
-            Account.getFriend(Account, account.friendship, (friends) => {
+            Account.getFriend(Account, account.friendships, (friends) => {
                 account.friends = friends;
-                delete account.friendship;
+                delete account.friendships;
                 return res.status(200).send(account);
             });            
         });
@@ -152,32 +150,56 @@ exports.publish = (req, res, next) => {
         name: req.body.name
     }
 
-    Account.findOneAndUpdate({uniqid: req.body.sender}, {$push: {post: post}}, (err, account) => {
+    Account.findOneAndUpdate({uniqid: req.body.uniqid}, {$push: {posts: post}}, {new: true}, (err, account) => {
         if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
         if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
 
-        //TODO
-        /* Need to change this logic, pls!! */
-        return res.status(201).send({message: {post: account.post[account.post.length - 1]}});
+        let index = account.posts.length - 1;
+        return res.status(201).send(account.posts[index]);
     });
 }
 
 exports.comment = (req, res, next) => {
-    let comment = {
-        uniqid: Account.setUniqid('post'),
-        content: req.body.content,
-        user: req.body.sender,
-        name: req.body.name
+
+    if(req.params.type === 'reply'){
+
+        let replyMetadata = {
+            user: req.body.commentator.uniqid,
+            name: req.body.commentator.name,
+            comment: req.body.commentator.comment
+        }
+
+        let comment = {
+            uniqid: Account.setUniqid('post'),
+            content: req.body.sender.content,
+            user: req.body.sender.uniqid,
+            name: req.body.sender.name,
+            replyMetadata: replyMetadata,
+            is_reply: true
+        }
+
+        Account.findOneAndUpdate({uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post}, {$push: {"posts.0.comments": comment}}, {new: true}, (err, account) => {
+            if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
+            if(!account) { return res.status(403).send({message: {user: 'This post does not exists'}}); }
+    
+            return res.status(201).send(account.posts[0].comments[account.posts[0].comments.length - 1]);
+        });
+
+    }else if(req.params.type === undefined){
+        let comment = {
+            uniqid: Account.setUniqid('post'),
+            content: req.body.content,
+            user: req.body.sender,
+            name: req.body.name
+        }
+    
+        Account.findOneAndUpdate({uniqid: req.body.poster, "posts.uniqid": req.body.post}, {$push: {"posts.0.comments": comment}}, {new: true}, (err, account) => {
+            if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
+            if(!account) { return res.status(403).send({message: {user: 'This post does not exists'}}); }
+    
+            return res.status(201).send(account.posts[0].comments[account.posts[0].comments.length - 1]);
+        });
     }
-
-    Account.findOneAndUpdate({uniqid: req.body.poster, "post.uniqid": req.body.post}, {$push: {"post.0.comment": comment}}, (err, account) => {
-        if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
-        if(!account) { return res.status(403).send({message: {user: 'This post does not exists'}}); }
-
-        //TODO
-        /* Need to change this logic, pls!! */
-        return res.status(201).send({message: {comment: account.post[0].comment[account.post[0].comment.length - 1]}});
-    });
 }
 
 exports.like = (req, res, next) => {
@@ -187,18 +209,22 @@ exports.like = (req, res, next) => {
     }
 
     if(req.params.type === 'comment'){
-        Account.findOneAndUpdate({uniqid: req.body.poster, "post.uniqid": req.body.post, "post.comment.uniqid": req.body.comment}, {$push: {"post.$.comment.0.like": like}} ,(err, account) => {
+        Account.findOneAndUpdate({uniqid: req.body.poster, "posts.uniqid": req.body.post, "posts.comments.uniqid": req.body.comment}, {$push: {"posts.$.comments.0.likes": like}}, {new: true}, (err, account) => {
             if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
-    
-            return res.status(201).send({message: {like: 'Liked!'}});
+
+            let index = account.posts[0].comments[0].likes.length - 1;
+            delete account.posts[0].comments[0].likes[index]._id;
+            return res.status(201).send(account.posts[0].comments[0].likes[index]);
         });
     }else if(req.params.type === 'post'){
-        Account.findOneAndUpdate({uniqid: req.body.poster, "post.uniqid": req.body.post}, {$push: {"post.$.like": like}}, (err, account) => {
+        Account.findOneAndUpdate({uniqid: req.body.poster, "posts.uniqid": req.body.post}, {$push: {"posts.$.likes": like}}, {new: true}, (err, account) => {
             if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
-    
-            return res.status(201).send({message: {like: 'Liked!'}});
+
+            let index = account.posts[0].likes.length - 1;
+            delete account.posts[0].likes[index]._id;
+            return res.status(201).send(account.posts[0].likes[index]);
         });
     }else{
         res.status(422).send({message: {type: 'Cannot process query type'}});
@@ -207,7 +233,37 @@ exports.like = (req, res, next) => {
 }
 
 exports.share = (req, res, next) => {
-    // Account.findOne({uniqid: req.body.poster, "post.uniqid": req.body.post}, (err, account) => {
-    //     Account.findOne({})
-    // });
+    /* 
+    sender uniqid, poster uniqid, post uniqid, 
+    */
+
+    //share metadata => post son
+    let shareMetadata = {
+        user: req.body.poster.uniqid,
+        name: req.body.poster.name,
+        post: req.body.poster.post
+    };
+
+    let share = {
+        user: req.body.sender.uniqid,
+        name: req.body.sender.name,
+    }
+    //share => original post
+    let post = {
+        uniqid: Account.setUniqid('post'),
+        name: req.body.sender.name,
+        is_share: true,
+        content: req.body.sender.content,
+        shareMetadata: shareMetadata,
+    }
+
+    Account.findOneAndUpdate({uniqid: req.body.poster.uniqid, "post.uniqid": req.body.poster.post}, {$push: {"post.0.shares": share}}, (err, account) => {
+        if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
+        Account.findOneAndUpdate({uniqid: req.body.sender.uniqid}, {$push: {"posts": post}}, {new: true}, (err, account) => {
+            if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
+
+            let index = account.posts.length - 1;
+            return res.status(201).send(account.posts[index]);
+        });
+    });
 }

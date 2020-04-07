@@ -23,7 +23,7 @@ exports.signin = new LocalStrategy({usernameField: 'email', passwordField: 'hash
             uniqid: account.uniqid,
             first_name: account.first_name,
             last_name: account.last_name,
-            friendship: account.friendship,
+            friendships: account.friendships,
             name: account.first_name + ' ' + account.last_name
         }
         return done(null, account, user);

@@ -12,12 +12,27 @@ let likeSchema = new mongoose.Schema({
     user: String,
     name: String,
     created_at: { type: Date, default: Date.now }
-});
+}, { _id: false});
 
 let shareSchema = new mongoose.Schema({
+    user: String,
+    name: String,
     post: String,
-    user: String
-});
+    created_at: { type: Date, default: Date.now }
+}, { _id: false});
+
+let shareMetadataSchema = new mongoose.Schema({
+    user: String,
+    name: String,
+    created_at: { type: Date, default: Date.now }
+}, { _id: false});
+
+let replyMetadataSchema = new mongoose.Schema({
+    user: String,
+    name: String,
+    comment: String,
+    created_at: { type: Date, default: Date.now }
+}, { _id: false});
 
 //TODO
 /* Add reply property if the comment is a reply to another comment */
@@ -26,7 +41,9 @@ let commentSchema = new mongoose.Schema({
     user: String,
     name: String,
     content: String,
-    like: [likeSchema],
+    is_reply: { type: Boolean, default: false },
+    replyMetadata: replyMetadataSchema,
+    likes: [likeSchema],
     created_at: { type: Date, default: Date.now }
 }, { _id: false });
 
@@ -34,10 +51,11 @@ let postSchema = mongoose.Schema({
     uniqid: String,
     name: String,
     content: String,
-    is_shared: Boolean,
-    share: shareSchema,
-    like: [likeSchema],
-    comment: [commentSchema],
+    is_share: { type: Boolean, default: false },
+    shares: [shareSchema],
+    shareMetadata: shareMetadataSchema,
+    likes: [likeSchema],
+    comments: [commentSchema],
     visibility: { type: Number, default: 1},
     created_at: { type: Date, default: Date.now }
 }, { _id: false });
