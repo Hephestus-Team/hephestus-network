@@ -247,12 +247,12 @@ exports.comment = (req, res, next) => {
     }else if(req.params.type === undefined){
         let comment = {
             uniqid: Account.setUniqid('post'),
-            content: req.body.content,
-            user: req.body.sender,
-            name: req.body.name
+            content: req.body.sender.content,
+            user: req.body.sender.uniqid,
+            name: req.body.sender.name
         }
-    
-        Account.findOneAndUpdate({uniqid: req.body.poster, "posts.uniqid": req.body.post}, {$push: {"posts.0.comments": comment}}, {new: true}, (err, account) => {
+
+        Account.findOneAndUpdate({uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post}, {$push: {"posts.0.comments": comment}}, {new: true}, (err, account) => {
             
             if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(!account) { return res.status(403).send({message: {user: 'This post does not exists'}}); }
