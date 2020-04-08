@@ -6,37 +6,31 @@ let friendshipSchema = mongoose.Schema({
     is_accepted: { type: Boolean, default: false },
     is_sender: Boolean,
     created_at: { type: Date, default: Date.now }
-}, { _id: false });
-
-let likeSchema = new mongoose.Schema({
+}, { _id: false }),
+likeSchema = new mongoose.Schema({
     user: String,
     name: String,
     created_at: { type: Date, default: Date.now }
-}, { _id: false});
-
-let shareSchema = new mongoose.Schema({
+}, { _id: false}),
+shareSchema = new mongoose.Schema({
     user: String,
     name: String,
     post: String,
     created_at: { type: Date, default: Date.now }
-}, { _id: false});
-
-let shareMetadataSchema = new mongoose.Schema({
+}, { _id: false}),
+shareMetadataSchema = new mongoose.Schema({
     user: String,
     name: String,
+    post: String,
     created_at: { type: Date, default: Date.now }
-}, { _id: false});
-
-let replyMetadataSchema = new mongoose.Schema({
+}, { _id: false}),
+replyMetadataSchema = new mongoose.Schema({
     user: String,
     name: String,
     comment: String,
     created_at: { type: Date, default: Date.now }
-}, { _id: false});
-
-//TODO
-/* Add reply property if the comment is a reply to another comment */
-let commentSchema = new mongoose.Schema({
+}, { _id: false}),
+commentSchema = new mongoose.Schema({
     uniqid: String,
     user: String,
     name: String,
@@ -45,9 +39,8 @@ let commentSchema = new mongoose.Schema({
     replyMetadata: replyMetadataSchema,
     likes: [likeSchema],
     created_at: { type: Date, default: Date.now }
-}, { _id: false });
-
-let postSchema = mongoose.Schema({
+}, { _id: false }),
+postSchema = mongoose.Schema({
     uniqid: String,
     name: String,
     content: String,

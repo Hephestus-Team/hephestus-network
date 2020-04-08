@@ -61,6 +61,6 @@ accountSchema.statics.getFriend = function getFriend(Account, friendships, cb) {
     });
 }
 
-var Account = mongoose.model('Account', accountSchema);
+let Account = mongoose.model('Account', accountSchema);
 
 module.exports = Account;
