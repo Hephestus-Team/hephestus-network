@@ -21,24 +21,6 @@ let accountSchema = mongoose.Schema({
     created_at: { type: Date, default: Date.now }
 });
 
-accountSchema.statics.setFriendship = function setId(user1, user2){
-    friendship_uniqid = uniqid();
-    return {
-        sender: {
-            _id: friendship_uniqid,
-            is_accepted: false,
-            is_sender: true,
-            friend: user1.uniqid
-        },
-        receiver: {
-            _id: friendship_uniqid,
-            is_accepted: false,
-            is_sender: false,
-            friend: user2.uniqid
-        }
-    }
-}
-
 accountSchema.statics.setHash = function setHash(password) {
     return bcrypt.hashSync(password, 10);
 }
@@ -66,7 +48,7 @@ accountSchema.statics.getFriend = function getFriend(Account, friendships, cb) {
         friends_uniqid.push(friendship.friend);
     });
 
-    Account.find({uniqid: {$in: friends_uniqid}}, {hash: 0, created_at: 0, email: 0, __v: 0, _id: 0, birthday: 0, friendship: 0, gender: 0}, {lean: true}, (err, accounts) => {
+    Account.find({uniqid: {$in: friends_uniqid}}, {hash: 0, created_at: 0, email: 0, __v: 0, _id: 0, birthday: 0, friendships: 0, gender: 0}, {lean: true}, (err, accounts) => {
         if(err) { return console.log(err); }
         if(!accounts) { return false; }
         accounts.forEach((account, index, accounts) => {
@@ -76,14 +58,6 @@ accountSchema.statics.getFriend = function getFriend(Account, friendships, cb) {
             });
         });
         cb(friends);
-    });
-}
-
-accountSchema.statics.getFriendship = function getFriendship(Account, users, cb){
-    Account.findOne({uniqid: {$in: users}, "friendship.friend": {$in: users}}, (err, account) => {
-        if (err) { return err; }
-        if (account) { return true; }
-        return false;
     });
 }
 
