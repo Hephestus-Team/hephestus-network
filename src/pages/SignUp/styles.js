@@ -7,7 +7,7 @@ export const Form = styled(form)`
     background-color: #fff;
     padding: 25px;
     box-shadow: 5px 10px 18px #888888;
-   
+
     .input-group-flex + .input-group-flex {
         margin-top: 25px;
     }
@@ -23,15 +23,6 @@ export const Form = styled(form)`
         font-size: 18px;
         font-weight: bold;
         display: block;
-    }
-
-    input:not([type=radio]) {
-        width: 100%;
-        height: 34px;
-        font-size: 18px;
-        color: #666;
-        border: 0;
-        border-bottom: 1px solid #eee;
     }
 
     input[type=radio] {
@@ -62,7 +53,7 @@ export const Form = styled(form)`
     }
 
     .container-grid{
-        margin-top: 20px;
+        margin-top: 30px;
         display: grid;
         grid-template-columns: 1fr 1fr;
         grid-gap: 20px;

@@ -3,10 +3,10 @@ import styled from 'styled-components';
 export const Input = styled.input`
     width: 100%;
     height: 34px;
-    font-size: 16px;
+    font-size: 18px;
     color: #666;
     border: 0;
-    border-bottom: 1px solid ${props => (props.error ? '#F44336' : '#eee')};
+    border-bottom: 1px solid ${(props) => (props.error ? '#F44336' : '#eee')};
 `;
 
 export const Label = styled.label`

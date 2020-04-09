@@ -5,8 +5,7 @@ import Routes from './routes';
 import './styles/fonts.css';
 import { GlobalStyle, AppContainer } from './styles/global';
 
-function App() {
-
+const App = () => {
   return (
     <>
       <GlobalStyle />

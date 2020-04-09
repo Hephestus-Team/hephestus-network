@@ -1,162 +1,72 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
+import { useStore } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 
-import { Chat, NavBar, FriendList } from './styles';
+import {
+  FiSearch, FiLogOut,
+} from 'react-icons/fi';
 
-import { receiveNewMessage, sendNewMessage, connect, disconnect } from '../../services/socket.js';
+import PersistContext from '../../persistContext';
 
-import searchIcon from '../../assets/icons/searchIcon.svg';
-import logoutIcon from '../../assets/icons/logoutIcon.svg';
+import Chat from '../../components/Chat';
+
+import {
+  NavBar, FriendList,
+} from '../../components/StyledCompenents';
 
 const Home = () => {
+  const [chatMessages, setChatMessages] = useState([]);
 
-    const chat = useRef(null);
+  const handleNewSendMessage = (message) => {
+    setChatMessages([...chatMessages, { message, type: 1 }]);
+  };
 
-    const [chatMessages, setChatMessages] = useState([]);
+  const persistor = useContext(PersistContext);
 
-    useEffect(() => {
-        receiveNewMessage(messageText => setChatMessages([...chatMessages, {messageText, type: 0}]));
-    }, [chatMessages])
+  const store = useStore();
+  const history = useHistory();
 
-    const changeChatExpansion = (chatStyle) => {
-        const elements = Array.from(chat.current.children).filter((element) => element.nodeName !== "HEADER");
+  const { name, uniqid } = store.getState().user;
 
-        if(chatStyle.height === '50vh') {
-            chatStyle.height = '7vh';
-            elements.forEach(element => element.style.display = 'none');
-        }
-        else {
-            chatStyle.height = '50vh'; 
-            elements.forEach(element => element.style.display = 'initial');
-        }         
-    };
-
-    const handleNewSendMessage = (messageText) => {
-        sendNewMessage(messageText);
-        setChatMessages([...chatMessages, {messageText, type: 1}]);
-    };
-
-    return (
-        <>
-            <NavBar>
-                <ul>         
-                    <li>
-                        <p>Shinzein</p>
-                    </li>
-                    <li>
-                        <p>Search</p>
-                        <div>
-                            <input type="text"/>
-                            <img src={searchIcon} alt="."/>
-                        </div>
-                    </li>
-                    <li>
-                        <button>
-                            <img src={logoutIcon} alt="."/>
-                            Logout
-                        </button>
-                    </li>
-                </ul>
-            </NavBar>
-            <FriendList>
-                <ul>
-                    <li>Pedro Muniz</li>
-                    <li>Daniel Arruda</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                    <li>Pedro Muniz</li>
-                </ul>
-            </FriendList>
-            <Chat ref={chat}>
-                <header onClick={() => changeChatExpansion(chat.current.style)}>
-                    <strong>
-                        Pedro Muniz
-                    </strong>
-                    <strong>
-                        X
-                    </strong>
-                </header>
-                <section>
-                    { chatMessages.map(messageInfo => 
-                        messageInfo.type == 1 ? <div><p className='user'>{messageInfo.message}</p></div> :
-                            <div><p className='friendMsg'>{messageInfo.message}</p></div>) }
-                </section>
-                <input type="text" placeholder="Type a Message" onKeyPress={(e) => { if(e.which == 13) handleNewSendMessage(e.target.value)}}/>
-            </Chat>
-        </>
-    );
-}
+  return (
+    <>
+      <NavBar>
+        <ul>
+          <li>
+            <button type="button" onClick={() => { history.push(`/profile/${uniqid}`); }}>
+              <p>{`${name}`}</p>
+            </button>
+          </li>
+          <li>
+            <p>Search</p>
+            <div>
+              <input type="text" />
+              <FiSearch />
+            </div>
+          </li>
+          <li>
+            <button
+              type="button"
+              onClick={() => {
+                persistor.purge();
+                window.location.reload(false);
+              }}
+            >
+              <FiLogOut />
+              Logout
+            </button>
+          </li>
+        </ul>
+      </NavBar>
+      <FriendList>
+        <ul />
+      </FriendList>
+      <Chat
+        chatMessages={chatMessages}
+        handleNewSendMessage={(message) => handleNewSendMessage(message)}
+      />
+    </>
+  );
+};
 
 export default Home;
