@@ -1,0 +1,49 @@
+div main {
+  width: 85vw;
+  margin-right: 15vw;
+}
+
+div main .profiles {
+  max-width: 600px;
+
+  margin: 0 auto;
+  margin-top: 30px;
+}
+div main .profiles .profile {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+
+  font-size: 15px;
+  margin: 30px 0;
+  padding: 20px;
+  width: 100%;
+
+  background: #FFF;
+  box-shadow: 5px 5px 7px #888888;
+}
+
+div main .profiles .profile .photo {
+  max-width: 100px;
+  height: 100px;
+
+  margin-right: 30px;
+}
+
+div main .profiles .profile .photo img {
+  width: 100px;
+  height: 100px;
+
+  box-shadow: 1px 1px 5px #888888;
+  margin-right: 20px;
+}
+
+div main .profiles .profile .info {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+div main .profiles .profile .info p {
+  margin-top: 10px;
+}
