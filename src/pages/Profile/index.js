@@ -39,6 +39,27 @@ const Profile = () => {
 
   const { name, uniqid: userUniqid } = store.getState().user;
 
+  const structingPosts = (responsePosts) => {
+    const editedPosts = responsePosts.map((post) => {
+      const noRepliedComments = post.comments.filter((comment) => !comment.is_reply).map((comment) => ({ ...comment, commenting: false, commentBar: '' }));
+
+      noRepliedComments.forEach((comment) => {
+        comment.replies = post.comments.filter(
+          (repliedComment) => repliedComment.is_reply
+            && repliedComment.replyMetadata.comment === comment.uniqid,
+        );
+
+        comment.showReplies = false;
+      });
+
+      return {
+        ...post, commenting: false, comments: noRepliedComments, commentBar: '',
+      };
+    });
+
+    return editedPosts;
+  };
+
   useEffect(() => {
     const getProfileInfo = async () => {
       try {
@@ -55,24 +76,7 @@ const Profile = () => {
 
         setAccountInfo(accountData);
 
-        const editedPosts = response.data.posts.map((post) => {
-          const noRepliedComments = post.comments.filter((comment) => !comment.is_reply).map((comment) => ({ ...comment, commenting: false, commentBar: '' }));
-
-          noRepliedComments.forEach((comment) => {
-            comment.replies = post.comments.filter(
-              (repliedComment) => repliedComment.is_reply
-            && repliedComment.replyMetadata.comment === comment.uniqid,
-            );
-
-            comment.showReplies = false;
-          });
-
-          return {
-            ...post, commenting: false, comments: noRepliedComments, commentBar: '',
-          };
-        });
-
-        setPosts(editedPosts);
+        setPosts(structingPosts(response.data.posts));
       } catch (err) {
         console.log(err);
       }
@@ -238,6 +242,114 @@ const Profile = () => {
       .sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
   };
 
+  const sendLike = async (sender, post, comment = null) => {
+    if (comment) {
+      const likeObj = {
+        poster: post.poster,
+        post: post.uniqid,
+        comment: comment.uniqid,
+        sender: sender.uniqid,
+        name: sender.name,
+      };
+
+      try {
+        const response = await api.post('/like/comment', likeObj, {
+          headers: {
+            Authorization: store.getState().user.token,
+          },
+        });
+
+        return response.data;
+      } catch (err) {
+        return err;
+      }
+    }
+
+    const likeObj = {
+      poster: post.poster,
+      post: post.uniqid,
+      sender: sender.uniqid,
+      name: sender.name,
+    };
+
+    console.log(likeObj);
+
+    try {
+      const response = await api.post('/like/post', likeObj, {
+        headers: {
+          Authorization: store.getState().user.token,
+        },
+      });
+
+      return response.data;
+    } catch (err) {
+      return err;
+    }
+  };
+
+  const handleLike = async (targetPost, targetComment = null) => {
+    console.log('BBB');
+    if (targetComment) {
+      const [noTargetPosts, noTargetComments] = getNoTargets(
+        targetPost.uniqid, targetComment.uniqid, targetPost.comments,
+      );
+
+      if (!targetComment.is_reply) {
+        const likeObj = sendLike({ name, uniqid }, targetPost, targetComment);
+
+        const comments = [
+          ...noTargetComments,
+          { ...targetComment, likes: [...targetComment.likes, likeObj] },
+        ].sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1));
+
+        setPosts([...noTargetPosts, {
+          ...targetPost,
+          comments,
+        }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+      } else {
+        const likeObj = sendLike({ name, uniqid }, targetPost, targetComment);
+
+        const noRepliedComment = targetPost.comments.filter(
+          (comment) => comment.uniqid === targetComment.comment,
+        )[0];
+
+        const noTargetReplies = noRepliedComment.replies.filter(
+          (reply) => reply.uniqid !== targetComment.uniqid,
+        );
+
+        const comments = [
+          ...noTargetComments,
+          {
+            ...noRepliedComment,
+            replies: [
+              ...noTargetReplies,
+              {
+                ...targetComment,
+                likes: [...targetComment.likes, likeObj],
+              },
+            ].sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1)),
+          },
+        ].sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1));
+
+        setPosts([...noTargetPosts, {
+          ...targetPost,
+          comments,
+        }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+      }
+    } else {
+      console.log('AAA');
+      const [noTargetPosts] = getNoTargets(targetPost.uniqid);
+
+      const likeObj = sendLike({ name, uniqid }, targetPost);
+
+      setPosts([...noTargetPosts,
+        {
+          ...targetPost,
+          likes: [...targetPost.likes, likeObj],
+        }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+    }
+  };
+
   return (
     <PageContainer>
       <NavBar>
@@ -379,6 +491,7 @@ const Profile = () => {
             <Post
               post={post}
               handleCommentting={handleCommentting}
+              handleLike={handleLike}
               setShowReplies={setShowReplies}
               key={post.uniqid}
             />

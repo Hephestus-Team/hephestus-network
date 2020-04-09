@@ -13,20 +13,28 @@ import {
 import { PostContainer } from './styles';
 
 const Post = ({
-  post, handleCommentting, setShowReplies,
+  post, handleCommentting, setShowReplies, handleLike,
 }) => (
   <PostContainer className="post" key={post.uniqid}>
     <strong className="author">{`${post.name}`}</strong>
     <p className="content">{post.content}</p>
     <div className="likeAndShare">
-      <button type="button" className="shareButton">
+      <button
+        type="button"
+        className="shareButton"
+        onClick={() => console.log('AAA')}
+      >
         <FiShare2 />
         <a>
           Share
         </a>
       </button>
 
-      <button type="button" className="likeButton">
+      <button
+        type="button"
+        className="likeButton"
+        onClick={() => handleLike(post)}
+      >
         <FiThumbsUp />
         <p>
           { post.likes ? post.likes.length : '' }
@@ -41,7 +49,11 @@ const Post = ({
           <strong className="author">{comment.name}</strong>
           <p>{ comment.content }</p>
           <div className="likeAndResponse">
-            <button type="button" className="likeButton">
+            <button
+              type="button"
+              className="likeButton"
+              onClick={() => handleLike(post)}
+            >
               <FiThumbsUp />
               <p>
                 { comment.likes ? comment.likes.length : '' }
