@@ -7,9 +7,9 @@ module.exports = (app, handlers) => {
 
     app.post('/signin', handlers.local);
 
-    app.get('/profile', handlers.jwt, handlers.profile);
-
     app.get('/u/(:uniqid)?', handlers.jwt, handlers.profile);
+
+    app.put('/u/(:uniqid)?', handlers.jwt, handlers.config)
 
     app.post('/add', handlers.jwt, handlers.add);
 
@@ -24,4 +24,5 @@ module.exports = (app, handlers) => {
     app.post('/comment/(:type)?', handlers.jwt, handlers.comment);
 
     app.post('/share', handlers.jwt, handlers.share);
+
 }

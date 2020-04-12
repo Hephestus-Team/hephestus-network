@@ -5,6 +5,8 @@ let accountSchema = mongoose.Schema({
     uniqid: String,
     first_name: String,
     last_name: String,
+    username: String,
+    bio: String,
     email: {
         type: String,
         match: [/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/],
@@ -49,15 +51,53 @@ accountSchema.statics.getFriend = function getFriend(Account, friendships, cb) {
     });
 
     Account.find({uniqid: {$in: friends_uniqid}}, {hash: 0, created_at: 0, email: 0, __v: 0, _id: 0, birthday: 0, friendships: 0, gender: 0}, {lean: true}, (err, accounts) => {
-        if(err) { return console.log(err); }
-        if(!accounts) { return false; }
+        if(err) { cb(err, null); }
+        if(!accounts) { return cb(null, null); }
         accounts.forEach((account, index, accounts) => {
             friends.push({
                 uniqid: account.uniqid,
                 name: `${account.first_name} ${account.last_name}`
             });
         });
-        cb(friends);
+        cb(null, friends);
+    });
+}
+
+accountSchema.statics.getIndexByUniqid = function getIndexByUniqid(array, value) {
+    return array.findIndex((element) => {
+        return element.uniqid === value;
+    });
+}
+
+accountSchema.statics.getCommentIndex = function getComment(Account, poster, cb) {
+    Account.findOne({uniqid: poster.uniqid}, {"posts": {$elemMatch: {uniqid: poster.post}}, _id: 0}, { lean: true }, (err, account) => {
+        if(err) { cb(err, null); }
+        if(!account) { cb(null, null); }
+
+        let posts = account.posts,
+        index = Account.getIndexByUniqid(posts[0].comments, poster.comment),
+        element = `posts.$.comments.${index}.likes`;
+
+        cb(null, element);
+    });
+}
+
+accountSchema.statics.getProfile = function getProfile(Account, operator, metadata, cb) {
+    Account.findOne(operator, { hash: 0, created_at: 0, __v: 0, _id: 0, email: 0 }, { lean: true }, (err, account) => {
+        if(err) { cb(err, null); }
+        if (metadata) { account = {...account, metadata}; }
+
+        if (account.friendships.length === 0) {
+            cb(null, account);
+        } else {
+            Account.getFriend(Account, account.friendships, (err, friends) => {
+                if(err) { cb(err, null); }
+                delete account.friendships;
+                account.friendships = friends;                
+
+                cb(null, account);
+            });
+        }
     });
 }
 

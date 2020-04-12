@@ -42,6 +42,7 @@ commentSchema = new mongoose.Schema({
 }, { _id: false }),
 postSchema = mongoose.Schema({
     uniqid: String,
+    poster: String,
     name: String,
     content: String,
     is_share: { type: Boolean, default: false },
@@ -59,7 +60,6 @@ postSchema = mongoose.Schema({
  *  Only friends & friends of friends can see the post :: 2
  *  Only friends can see the post :: 3
  *  Private post :: 4 
- *
  */
 
 module.exports = {

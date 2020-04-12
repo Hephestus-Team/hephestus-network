@@ -131,26 +131,13 @@ exports.refuse = (req, res, next) => {
 }
 
 exports.profile = (req, res, next) => {
-    if(req.header('u') === req.params.uniqid || req.params.uniqid === undefined){
-        Account.findOne({uniqid: {$in: [req.params.uniqid, req.header("u")]}}, { hash: 0, created_at: 0, __v: 0, _id: 0 }, {lean: true}, (err, account) => {
-            
-            if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
-            if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
+    if(req.header('u') === req.params.uniqid || (req.params.uniqid === undefined && req.header('u'))){
 
-            account.is_user = true;
-
-            if(account.friendships === null){
-                return res.status(200).send(account);
-            }else{
-                
-                Account.getFriend(Account, account.friendships, (friends) => {
-                    account.friends = friends;
-                    delete account.friendships;
-    
-                    return res.status(200).send(account);
-                });
-
-            }
+        Account.getProfile(Account, { $or: [ { uniqid: {$in: [req.params.uniqid, req.header("u")]} }, { username: req.params.uniqid } ] }, {is_user: true}, (err, account) => {
+            if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' } }); }
+            if (!account) { return res.status(403).send({ message: { user: 'User does not exist' } }); }
+        
+            return res.status(200).send(account);
         });
 
     }else{
@@ -159,43 +146,20 @@ exports.profile = (req, res, next) => {
             if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
             if(account) {
 
-                account.is_user = false;
-                account.is_friend = true;
-
-                if(account.friendships === null){
-                    return res.status(200).send(account);
-                }else{
+                Account.getProfile(Account, { $or: [ { uniqid: {$eq: req.params.uniqid} }, { username: req.params.uniqid } ] }, {is_user: false, is_friend: true}, (err, account) => {
+                    if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' } }); }
+                    if (!account) { return res.status(403).send({ message: { user: 'User does not exist' } }); }
                     
-                    Account.getFriend(Account, account.friendships, (friends) => {
-                        account.friends = friends;
-                        delete account.friendships;
-        
-                        return res.status(200).send(account);
-                    });
-
-                }
-
-            }else{
-                Account.findOne({uniqid: req.params.uniqid}, { hash: 0, created_at: 0, __v: 0, _id: 0 }, {lean: true}, (err, account) => {
-                    if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' }}); }
-                    if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
-        
-                    account.is_user = false;
-                    account.is_friend = false;
-
-                    if(account.friendships === null){
-                        return res.status(200).send(account);
-                    }else{
-                        Account.getFriend(Account, account.friendships, (friends) => {
-                            account.friends = friends;
-                            delete account.friendships;
-            
-                            return res.status(200).send(account);
-                        });
-                    }
-
+                    return res.status(200).send(account);
                 });
 
+            }else{
+                Account.getProfile(Account, { $or: [ { uniqid: {$eq: req.params.uniqid} }, { username: req.params.uniqid } ] }, {is_user: false, is_friend: false}, (err, account) => {
+                    if(err) { console.log(err); return res.status(500).send({ message: { database: 'Internal error' } }); }
+                    if(!account) { return res.status(403).send({ message: { user: 'User does not exist' } }); }
+
+                    return res.status(200).send(account);
+                });
             }
         });
     }
@@ -269,15 +233,22 @@ exports.like = (req, res, next) => {
     }
 
     if(req.params.type === 'comment'){
-        Account.findOneAndUpdate({uniqid: req.body.poster, "posts.uniqid": req.body.post, "posts.comments.uniqid": req.body.comment}, {$push: {"posts.$.comments.0.likes": like}}, {new: true}, (err, account) => {
-            
+        Account.getCommentIndex(Account, {uniqid: req.body.poster, post: req.body.post, comment: req.body.comment}, (err, element) => {
             if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
-            if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
+            if(!element) { return res.status(403).send({ message: { comment: 'This comment does not exists' }}); }
 
-            let index = account.posts[0].comments[0].likes.length - 1;
-            delete account.posts[0].comments[0].likes[index]._id;
+            Account.findOneAndUpdate({uniqid: req.body.poster, "posts.uniqid": req.body.post}, {$push: {[element]: like}}, {new: true}, (err, account) => {
+                if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
+                if(!account) { return res.status(403).send({message: {user: 'User does not exist'}}); }
+        
+                let postIndex = Account.getIndexByUniqid(account.posts, req.body.post),
+                commentIndex = Account.getIndexByUniqid(account.posts[postIndex].comments, req.body.comment);
+                likeIndex = account.posts[postIndex].comments[commentIndex].likes.length - 1;
 
-            return res.status(201).send(account.posts[0].comments[0].likes[index]);
+                delete account._id;
+
+                return res.status(201).send(account.posts[postIndex].comments[commentIndex].likes[likeIndex]);
+            });
         });
     }else if(req.params.type === 'post'){
         Account.findOneAndUpdate({uniqid: req.body.poster, "posts.uniqid": req.body.post}, {$push: {"posts.$.likes": like}}, {new: true}, (err, account) => {
@@ -315,16 +286,33 @@ exports.share = (req, res, next) => {
         post: post.uniqid
     };
 
-    Account.findOneAndUpdate({uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post}, {$push: {"posts.0.shares": share}}, (err, account) => {
+    Account.findOneAndUpdate({uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post}, {$push: {"posts.$.shares": share}}, {new: true}, (err, account) => {
         if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
         
+        let index = Account.getIndexByUniqid(account.posts, req.body.poster.post),
+        original = account.posts[index];
+
         Account.findOneAndUpdate({uniqid: req.body.sender.uniqid}, {$push: {"posts": post}}, {new: true}, (err, account) => {
             
             if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
 
             let index = account.posts.length - 1;
             
-            return res.status(201).send(account.posts[index]);
+            return res.status(201).send({share: account.posts[index], original: original});
         });
     });
+}
+
+exports.config = (req, res, next) => {
+    if(req.header('u') === req.params.uniqid || (req.params.uniqid === undefined && req.header('u')) ){
+        Account.findOneAndUpdate({uniqid: req.header('u')}, req.body.user, {new: true}, (err, account) => {
+            
+            if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: 'Internal error' }}); }
+            delete account._id, account.hash, account.email;
+
+            return res.status(200).send(account);
+        });
+    }else{
+        return res.status(401).send({message: {user: "You cannot change another user information"}});
+    }
 }
