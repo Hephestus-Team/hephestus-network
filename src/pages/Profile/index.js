@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/anchor-is-valid */
@@ -5,16 +6,18 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import { useStore } from 'react-redux';
 import {
-  FiLogOut, FiMail, FiCalendar,
+  FiLogOut, FiCalendar,
 } from 'react-icons/fi';
 
 import {
   AiOutlineSearch,
 } from 'react-icons/ai';
 
+import moment from 'moment';
+
 import {
   NavBar, FriendList,
-} from '../../components/StyledCompenents';
+} from '../../components/StyledComponents';
 
 import Chat from '../../components/Chat';
 import Post from '../../components/Post';
@@ -29,12 +32,15 @@ import { PageContainer } from './styles';
 const Profile = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [searchBar, setSearchBar] = useState('');
+  const [publishText, setPublishText] = useState('');
+
   const { uniqid } = useParams();
   const store = useStore();
   const persistor = useContext(PersistContext);
   const history = useHistory();
 
   const [accountInfo, setAccountInfo] = useState({});
+  const [editProfile, setEditProfile] = useState({});
   const [posts, setPosts] = useState([]);
 
   const { name, uniqid: userUniqid } = store.getState().user;
@@ -74,7 +80,16 @@ const Profile = () => {
 
         delete accountData.posts;
 
+        accountData.birthday = moment(accountData.birthday);
+
+        console.log(response.data);
+
         setAccountInfo(accountData);
+
+        setEditProfile({
+          ...accountData,
+          editting: false,
+        });
 
         setPosts(structingPosts(response.data.posts));
       } catch (err) {
@@ -83,12 +98,57 @@ const Profile = () => {
     };
 
     getProfileInfo();
-  }, [uniqid]);
+  }, [uniqid, store]);
 
-  const [editProfile, setEditProfile] = useState({
-    ...accountInfo,
-    editting: false,
-  });
+  const handleEditProfile = async () => {
+    if (editProfile.first_name !== '' && editProfile.last_name !== '' && editProfile.birthday !== '') {
+      const response = await api.put(`/u/${uniqid}`, {
+        user: {
+          first_name: editProfile.first_name,
+          last_name: editProfile.last_name,
+          bio: editProfile.bio,
+          birthday: editProfile.birthday,
+        },
+      }, {
+        headers: {
+          Authorization: store.getState().user.token,
+          u: store.getState().user.uniqid,
+        },
+      });
+
+      console.log(response.data);
+
+      setEditProfile({ ...editProfile, editting: false });
+      setAccountInfo({
+        ...accountInfo,
+        birthday: editProfile.birthday,
+        bio: editProfile.bio,
+        first_name: editProfile.first_name,
+        last_name: editProfile.last_name,
+      });
+    } else {
+      setEditProfile({ ...accountInfo, editting: false });
+    }
+  };
+
+  const handlePublish = async () => {
+    try {
+      const response = await api.post('/publish', { content: publishText, uniqid: userUniqid, name }, {
+        headers: {
+          Authorization: store.getState().user.token,
+        },
+      });
+
+      setPosts([
+        ...posts,
+        response.data,
+      ].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+
+      setPublishText('');
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleNewSendMessage = (message) => {
     setChatMessages([...chatMessages, { message, type: 1 }]);
@@ -126,8 +186,6 @@ const Profile = () => {
           post: post.uniqid,
         },
       };
-
-      console.log(commentObj);
 
       try {
         const response = await api.post('/comment/reply', commentObj, {
@@ -187,7 +245,12 @@ const Profile = () => {
           comments,
         }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
       } else {
-        const commentObj = await sendComment({ name, uniqid }, targetPost, targetComment);
+        const commentObj = await sendComment(
+          {
+            name,
+            uniqid: accountInfo.uniqid,
+          }, targetPost, targetComment,
+        );
 
         const comments = [...noTargetComments, {
           ...targetComment,
@@ -209,7 +272,7 @@ const Profile = () => {
         setPosts([...noTargetPosts, { ...targetPost, ...newInfo }]
           .sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
       } else {
-        const commentObj = await sendComment({ name, uniqid }, targetPost);
+        const commentObj = await sendComment({ name, uniqid: accountInfo.uniqid }, targetPost);
 
         setPosts([...noTargetPosts,
           {
@@ -252,6 +315,8 @@ const Profile = () => {
         name: sender.name,
       };
 
+      console.log(likeObj);
+
       try {
         const response = await api.post('/like/comment', likeObj, {
           headers: {
@@ -272,8 +337,6 @@ const Profile = () => {
       name: sender.name,
     };
 
-    console.log(likeObj);
-
     try {
       const response = await api.post('/like/post', likeObj, {
         headers: {
@@ -288,14 +351,16 @@ const Profile = () => {
   };
 
   const handleLike = async (targetPost, targetComment = null) => {
-    console.log('BBB');
     if (targetComment) {
-      const [noTargetPosts, noTargetComments] = getNoTargets(
-        targetPost.uniqid, targetComment.uniqid, targetPost.comments,
-      );
-
       if (!targetComment.is_reply) {
-        const likeObj = sendLike({ name, uniqid }, targetPost, targetComment);
+        const [noTargetPosts, noTargetComments] = getNoTargets(
+          targetPost.uniqid, targetComment.uniqid, targetPost.comments,
+        );
+
+        const likeObj = await sendLike({
+          name,
+          uniqid: accountInfo.uniqid,
+        }, targetPost, targetComment);
 
         const comments = [
           ...noTargetComments,
@@ -307,11 +372,18 @@ const Profile = () => {
           comments,
         }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
       } else {
-        const likeObj = sendLike({ name, uniqid }, targetPost, targetComment);
+        const likeObj = await sendLike({
+          name,
+          uniqid: accountInfo.uniqid,
+        }, targetPost, targetComment);
 
         const noRepliedComment = targetPost.comments.filter(
-          (comment) => comment.uniqid === targetComment.comment,
+          (comment) => comment.uniqid === targetComment.replyMetadata.comment,
         )[0];
+
+        const [noTargetPosts, noTargetComments] = getNoTargets(
+          targetPost.uniqid, noRepliedComment.uniqid, targetPost.comments,
+        );
 
         const noTargetReplies = noRepliedComment.replies.filter(
           (reply) => reply.uniqid !== targetComment.uniqid,
@@ -337,10 +409,9 @@ const Profile = () => {
         }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
       }
     } else {
-      console.log('AAA');
       const [noTargetPosts] = getNoTargets(targetPost.uniqid);
 
-      const likeObj = sendLike({ name, uniqid }, targetPost);
+      const likeObj = await sendLike({ name, uniqid: accountInfo.uniqid }, targetPost);
 
       setPosts([...noTargetPosts,
         {
@@ -348,6 +419,54 @@ const Profile = () => {
           likes: [...targetPost.likes, likeObj],
         }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
     }
+  };
+
+  const handleShare = async (post, content) => {
+    const shareObj = post.is_share ? {
+      poster: {
+        uniqid: post.shareMetadata.user,
+        name: post.shareMetadata.name,
+        post: post.shareMetadata.post,
+      },
+      sender: {
+        uniqid: userUniqid,
+        name,
+        content,
+      },
+    } : {
+      poster: {
+        uniqid: post.poster,
+        name: post.name,
+        post: post.uniqid,
+      },
+      sender: {
+        uniqid: userUniqid,
+        name,
+        content,
+      },
+    };
+
+    try {
+      const response = await api.post('/share', shareObj, {
+        headers: {
+          Authorization: store.getState().user.token,
+        },
+      });
+
+      console.log(response.data);
+
+      setPosts([...posts, response.data]
+        .sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const autosize = (element) => {
+    setTimeout(() => {
+      element.style.cssText = 'height:auto; padding:0';
+      element.style.cssText = `height:${element.scrollHeight}px`;
+    }, 0);
   };
 
   return (
@@ -399,8 +518,21 @@ const Profile = () => {
             </strong>
           )}
 
+          { editProfile.editting
+            ? (
+              <div className="username">
+                <input type="text" value={editProfile.username} placeholder="Add a username" onChange={(e) => setEditProfile({ ...editProfile, username: e.target.value })} />
+              </div>
+            ) : (
+              <div className="username">
+                <p>
+                  { editProfile.username ? `@${editProfile.username}` : '' }
+                </p>
+              </div>
+            )}
+
           {
-            !editProfile.editting && uniqid === userUniqid
+            !editProfile.editting && accountInfo.uniqid === userUniqid
             && (
             <button type="button" onClick={() => { setEditProfile({ ...editProfile, editting: true }); }}>
               Edit Profie
@@ -417,34 +549,21 @@ const Profile = () => {
               </div>
             )}
 
-          { editProfile.editting ? (
-            <div className="email">
-              <FiMail />
-              <input type="email" value={editProfile.email} placeholder="E-mail" onChange={(e) => setEditProfile({ ...editProfile, email: e.target.value })} />
-            </div>
-          ) : (
-            <div className="email">
-              <FiMail />
-              <p>
-                { accountInfo.email }
-              </p>
-            </div>
-          )}
-
           { editProfile.editting
             ? (
               <div className="birthday">
                 <FiCalendar />
-                <input type="date" value={new Date(editProfile.birthday)} placeholder="Birthday" onChange={(e) => setEditProfile({ ...editProfile, birthday: e.target.value })} />
+                <input type="date" value={editProfile.birthday.format('Y-MM-DD')} placeholder="Birthday" onChange={(e) => setEditProfile({ ...editProfile, birthday: moment(e.target.value.toString()) })} />
               </div>
             ) : (
               <div className="birthday">
                 <FiCalendar />
                 <p>
-                  { accountInfo.birthday }
+                  { editProfile.birthday ? editProfile.birthday.format('DD/MM/Y') : '' }
                 </p>
               </div>
             )}
+
         </div>
 
         { editProfile.editting && (
@@ -453,14 +572,7 @@ const Profile = () => {
             <button
               type="button"
               onClick={() => {
-                setEditProfile({ ...editProfile, editting: false });
-                setAccountInfo({
-                  email: editProfile.email,
-                  birthday: editProfile.birthday,
-                  bio: editProfile.bio,
-                  first_name: editProfile.first_name,
-                  last_name: editProfile.last_name,
-                });
+                handleEditProfile();
               }}
             >
               Save
@@ -487,11 +599,26 @@ const Profile = () => {
       </aside>
       <main>
         <div className="feed">
+          <div className="publish">
+            <h1> Create a publish </h1>
+            <textarea
+              placeholder="What's happening ?"
+              onChange={(e) => { setPublishText(e.target.value); }}
+              onKeyDown={(e) => autosize(e.target)}
+            />
+            <button
+              type="button"
+              onClick={() => { handlePublish(); }}
+            >
+              Publish
+            </button>
+          </div>
           { posts.map((post) => (
             <Post
               post={post}
               handleCommentting={handleCommentting}
               handleLike={handleLike}
+              handleShare={handleShare}
               setShowReplies={setShowReplies}
               key={post.uniqid}
             />

@@ -3,8 +3,12 @@ import { useStore } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
 import {
-  FiSearch, FiLogOut,
+  FiLogOut,
 } from 'react-icons/fi';
+
+import {
+  AiOutlineSearch,
+} from 'react-icons/ai';
 
 import PersistContext from '../../persistContext';
 
@@ -12,10 +16,11 @@ import Chat from '../../components/Chat';
 
 import {
   NavBar, FriendList,
-} from '../../components/StyledCompenents';
+} from '../../components/StyledComponents';
 
 const Home = () => {
   const [chatMessages, setChatMessages] = useState([]);
+  const [searchBar, setSearchBar] = useState('');
 
   const handleNewSendMessage = (message) => {
     setChatMessages([...chatMessages, { message, type: 1 }]);
@@ -38,10 +43,11 @@ const Home = () => {
             </button>
           </li>
           <li>
-            <p>Search</p>
             <div>
-              <input type="text" />
-              <FiSearch />
+              <input type="text" placeholder="Search" value={searchBar} onChange={(e) => setSearchBar(e.target.value)} />
+              <button type="button">
+                <AiOutlineSearch />
+              </button>
             </div>
           </li>
           <li>
@@ -49,6 +55,7 @@ const Home = () => {
               type="button"
               onClick={() => {
                 persistor.purge();
+                history.push('/');
                 window.location.reload(false);
               }}
             >

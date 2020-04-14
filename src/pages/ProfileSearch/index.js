@@ -13,7 +13,7 @@ import {
 
 import {
   NavBar, FriendList,
-} from '../../components/StyledCompenents';
+} from '../../components/StyledComponents';
 
 import Chat from '../../components/Chat';
 

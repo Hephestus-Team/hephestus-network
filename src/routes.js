@@ -15,6 +15,7 @@ import SignUp from './pages/SignUp';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import ProfileSearch from './pages/ProfileSearch';
+import Config from './pages/Config';
 
 import { store, persistor } from './store';
 import { PersistProvider } from './persistContext';
@@ -46,6 +47,7 @@ const Routes = () => (
             </Route>
             <PrivateRoute path="/profile/:uniqid" component={() => <Profile />} />
             <PrivateRoute path="/profileSearch/:name" component={() => <ProfileSearch />} />
+            <PrivateRoute path="/config" component={() => <Config />} />
             <Route path="*" component={() => <h1>Page not found</h1>} />
           </Switch>
         </Router>

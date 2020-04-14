@@ -182,6 +182,11 @@ export const PageContainer = styled.div`
     cursor: pointer;
   }
 
+  .username p {
+    color: #888888;
+    font-size: 16px;
+  }
+
   main {
     display: flex;
     flex-direction: column;
@@ -196,6 +201,50 @@ export const PageContainer = styled.div`
 
   .feed .post:first-child {
     margin-top: 0;
+  }
+
+  .feed .publish {
+    background-color: #FFF;
+    padding: 15px;
+
+    display: flex;
+    flex-direction: column;
+
+    box-shadow: 5px 5px 7px #888888;
+  }
+
+  .feed .publish h1 {
+    font-size: 24px;
+    margin-bottom: 15px;
+  }
+
+  .feed .publish textarea {
+    height: auto;
+    width: 98%;
+    margin-bottom: 15px;
+
+    font-size: 18px;
+    font-family: Roboto,sans-serif;
+    color: #000;
+
+    resize: none;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 2px solid #eef;
+
+    align-self: center;
+  }
+
+  .feed .publish button {
+    border: 0;
+    border-radius: 2px;
+    background: #05ade0;
+    padding: 6px 18px;
+    font-size: 15px;
+    color: #fff;
+    cursor: pointer;
+
+    align-self: flex-end;
   }
 
   @media only screen and (max-width: 1200px) {
