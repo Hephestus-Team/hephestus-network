@@ -82,20 +82,96 @@ accountSchema.statics.getCommentIndex = function getComment(Account, poster, cb)
     });
 }
 
-accountSchema.statics.getProfile = function getProfile(Account, operator, metadata, cb) {
+accountSchema.statics.getPost = function getPost(Account, uniqid, cb){
+    Account.findOne({uniqid: uniqid}, {_id: 0}, (err, account) => {
+        if(err) { cb(err, null); }
+        if(!account) { cb(null, null); }
+        
+        let posts = account.posts.map(post => post.uniqid);
+    
+        //get share posts
+        Account.aggregate([{$unwind: "$posts" }, {$match: {uniqid: account.uniqid, "posts.uniqid": {$in: posts}}}, 
+        {
+            $project: {
+                "posts.uniqid": 1,
+                "posts.content": 1,
+                "posts.original": {
+                    $cond: {if: {$eq: ["$posts.is_share", true]}, then: "$posts.shareMetadata.post", else: false}
+                },
+                "posts.created_at": 1,
+                "posts.visibility": 1,
+                "posts.is_share": 1,
+                "posts.name": 1,
+                "posts.shares": 1,
+                "posts.likes": 1,
+                "posts.comments": 1,
+                "posts.created_at": 1,
+                _id: 0
+            }
+        }, {$sort: { "posts.original": 1 } }], (err, accounts) => {
+            if(err) { cb(err, null); }
+            if(!accounts) { cb(null, null); }
+    
+            let posts = accounts.map(account => account.posts);
+            let shares = posts.filter(post => post.is_share);
+            
+            posts = posts.filter(post => !post.is_share);
+
+            // get original posts
+            Account.aggregate([{$unwind: "$posts" }, {$match: {"posts.uniqid": {$in: shares.map(share => share.original)}}}, 
+            {
+                $project: {
+                    "posts.uniqid": 1,
+                    "posts.content": 1,
+                    "posts.name": 1,
+                    _id: 0
+                }
+            }, {$sort: { "posts.uniqid": 1 } }], (err, originals) => {
+                if(err) { cb(err, null) }
+                if(!originals) { cb(null, null) }
+        
+                originals = originals.map(original => original.posts);
+    
+                shares.forEach(share => {
+                    let original = originals.find(original => original.uniqid == share.original);
+                    delete share.original;
+    
+                    share.original = original;
+                });
+    
+                posts = posts.concat(shares);
+    
+                cb(null, posts);
+            });
+        });
+    });
+}
+
+accountSchema.statics.getProfile = function getProfile(Account, operator, cb) {
     Account.findOne(operator, { hash: 0, created_at: 0, __v: 0, _id: 0, email: 0 }, { lean: true }, (err, account) => {
         if(err) { cb(err, null); }
-        if (metadata) { account = {...account, metadata}; }
 
         if (account.friendships.length === 0) {
-            cb(null, account);
+            Account.getPost(Account, account.uniqid, (err, posts) => {
+                if(err) { cb(err, null); }
+                delete account.posts
+                account.posts = posts;
+                
+                cb(null, account);
+            });
         } else {
             Account.getFriend(Account, account.friendships, (err, friends) => {
                 if(err) { cb(err, null); }
                 delete account.friendships;
                 account.friendships = friends;                
 
-                cb(null, account);
+                Account.getPost(Account, account.uniqid, (err, posts) => {
+                    if(err) { cb(err, null); }
+                    delete account.posts
+                    account.posts = posts;
+                    
+                    cb(null, account);
+                });
             });
         }
     });

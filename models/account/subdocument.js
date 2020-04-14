@@ -21,14 +21,12 @@ shareSchema = new mongoose.Schema({
 shareMetadataSchema = new mongoose.Schema({
     user: String,
     name: String,
-    post: String,
-    created_at: { type: Date, default: Date.now }
+    post: String
 }, { _id: false}),
 replyMetadataSchema = new mongoose.Schema({
     user: String,
     name: String,
-    comment: String,
-    created_at: { type: Date, default: Date.now }
+    comment: String
 }, { _id: false}),
 commentSchema = new mongoose.Schema({
     uniqid: String,
