@@ -78,7 +78,13 @@ export const NavBar = styled.nav`
     color: #909090;
   }
 
-  ul li:last-child button {
+  ul li:last-child {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  ul li:last-child button:first-child {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -87,8 +93,7 @@ export const NavBar = styled.nav`
     border-radius: 2px;
     background: #05ade0;
     padding: 8px 15px;
-
-    margin: 0 auto;
+    margin-right: 20px;
 
     font-size: 16px;
     font-weight: bold;
@@ -98,8 +103,15 @@ export const NavBar = styled.nav`
     transition: background 0.5s;
   }
 
-  ul li:last-child button:hover {
+  ul li:last-child button:first-child:hover {
     background: #2979FF;
+  }
+
+  ul li:last-child button:last-child {
+    background: none;
+    border: 0;
+
+    cursor: pointer;
   }
 
   ul li:last-child  button svg {
@@ -160,6 +172,8 @@ export const FriendList = styled.div`
   position: fixed;
 
   background-color: ${grayscale('rgba(256,256,256,0.7)')};
+
+  z-index: 1;
 
   width: 15vw;
   height: 100%;

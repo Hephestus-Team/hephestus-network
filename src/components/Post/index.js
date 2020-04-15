@@ -50,8 +50,8 @@ const Post = ({
       </div>
       )}
 
-      <strong className="author">{post.is_share ? `${post.original.name}` : `${post.name}`}</strong>
-      <p className="content">{post.is_share ? `${post.original.content}` : `${post.content}`}</p>
+      <strong className="author">{post.original ? `${post.original.name}` : `${post.name}`}</strong>
+      <p className="content">{post.original ? `${post.original.content}` : `${post.content}`}</p>
       <div className="likeAndShare">
         <button
           type="button"

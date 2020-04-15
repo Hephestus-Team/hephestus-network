@@ -280,6 +280,17 @@ export const PostContainer = styled.div`
 
     background-color: rgb(0,0,0);
     background-color: rgba(0,0,0,0.4);
+
+    animation: fadeIn 280ms ease-in-out 1;
+
+    @keyframes fadeIn {
+      from {
+        background-color: rgba(0, 0, 0, 0);
+      }
+      to {
+        background-color: rgba(0,0,0,0.4);
+      }
+    }
   }
 
   .shareModal .modalContent {

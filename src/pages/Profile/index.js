@@ -2,7 +2,9 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable react/no-array-index-key */
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect, useContext } from 'react';
+import React, {
+  useState, useEffect, useContext, useRef,
+} from 'react';
 import { useParams, useHistory } from 'react-router-dom';
 import { useStore } from 'react-redux';
 import {
@@ -13,12 +15,17 @@ import {
   AiOutlineSearch,
 } from 'react-icons/ai';
 
+import {
+  GoGear,
+} from 'react-icons/go';
+
 import moment from 'moment';
 
 import {
   NavBar, FriendList,
 } from '../../components/StyledComponents';
 
+import ConfigDialog from '../../components/ConfigDialog';
 import Chat from '../../components/Chat';
 import Post from '../../components/Post';
 
@@ -43,7 +50,17 @@ const Profile = () => {
   const [editProfile, setEditProfile] = useState({});
   const [posts, setPosts] = useState([]);
 
+  const configDialog = useRef(null);
+
   const { name, uniqid: userUniqid } = store.getState().user;
+
+  const changeModalDisplay = () => {
+    if (configDialog.current.style.display === 'block' && configDialog.current.style.display) {
+      configDialog.current.style.display = 'none';
+    } else {
+      configDialog.current.style.display = 'block';
+    }
+  };
 
   const structingPosts = (responsePosts) => {
     const editedPosts = responsePosts.map((post) => {
@@ -63,7 +80,7 @@ const Profile = () => {
       };
     });
 
-    return editedPosts;
+    return editedPosts.sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1));
   };
 
   useEffect(() => {
@@ -102,12 +119,13 @@ const Profile = () => {
 
   const handleEditProfile = async () => {
     if (editProfile.first_name !== '' && editProfile.last_name !== '' && editProfile.birthday !== '') {
-      const response = await api.put(`/u/${uniqid}`, {
+      const response = await api.patch(`/u/${uniqid}`, {
         user: {
           first_name: editProfile.first_name,
           last_name: editProfile.last_name,
           bio: editProfile.bio,
           birthday: editProfile.birthday,
+          username: editProfile.username,
         },
       }, {
         headers: {
@@ -125,15 +143,16 @@ const Profile = () => {
         bio: editProfile.bio,
         first_name: editProfile.first_name,
         last_name: editProfile.last_name,
+        username: editProfile.username,
       });
     } else {
       setEditProfile({ ...accountInfo, editting: false });
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (publishContent) => {
     try {
-      const response = await api.post('/publish', { content: publishText, uniqid: userUniqid, name }, {
+      const response = await api.post('/publish', { content: publishContent, uniqid: userUniqid, name }, {
         headers: {
           Authorization: store.getState().user.token,
         },
@@ -142,7 +161,7 @@ const Profile = () => {
       setPosts([
         ...posts,
         response.data,
-      ].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+      ].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
 
       setPublishText('');
     } catch (err) {
@@ -238,12 +257,12 @@ const Profile = () => {
 
       if (!newComment) {
         const comments = [...noTargetComments, { ...targetComment, ...newInfo }]
-          .sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1));
+          .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
 
         setPosts([...noTargetPosts, {
           ...targetPost,
           comments,
-        }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
       } else {
         const commentObj = await sendComment(
           {
@@ -257,20 +276,20 @@ const Profile = () => {
           ...newInfo,
           showReplies: true,
           replies: [...targetComment.replies, commentObj]
-            .sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1)),
-        }].sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1));
+            .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1)),
+        }].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
 
         setPosts([...noTargetPosts, {
           ...targetPost,
           comments,
-        }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
       }
     } else {
       const [noTargetPosts] = getNoTargets(targetPost.uniqid);
 
       if (!newComment) {
         setPosts([...noTargetPosts, { ...targetPost, ...newInfo }]
-          .sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+          .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
       } else {
         const commentObj = await sendComment({ name, uniqid: accountInfo.uniqid }, targetPost);
 
@@ -286,7 +305,7 @@ const Profile = () => {
               showReplies: false,
             }],
           }]
-          .sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+          .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
       }
     }
   };
@@ -298,11 +317,11 @@ const Profile = () => {
 
     const comments = [...noTargetComments,
       { ...targetComment, showReplies: !targetComment.showReplies }]
-      .sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1));
+      .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
 
     setPosts([...noTargetPosts,
       { ...targetPost, comments }]
-      .sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+      .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
   };
 
   const sendLike = async (sender, post, comment = null) => {
@@ -365,12 +384,12 @@ const Profile = () => {
         const comments = [
           ...noTargetComments,
           { ...targetComment, likes: [...targetComment.likes, likeObj] },
-        ].sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1));
+        ].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
 
         setPosts([...noTargetPosts, {
           ...targetPost,
           comments,
-        }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
       } else {
         const likeObj = await sendLike({
           name,
@@ -399,14 +418,14 @@ const Profile = () => {
                 ...targetComment,
                 likes: [...targetComment.likes, likeObj],
               },
-            ].sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1)),
+            ].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1)),
           },
-        ].sort((commentA, commentB) => (commentA.created_at > commentB.created_at ? 1 : -1));
+        ].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
 
         setPosts([...noTargetPosts, {
           ...targetPost,
           comments,
-        }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
       }
     } else {
       const [noTargetPosts] = getNoTargets(targetPost.uniqid);
@@ -417,7 +436,7 @@ const Profile = () => {
         {
           ...targetPost,
           likes: [...targetPost.likes, likeObj],
-        }].sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
     }
   };
 
@@ -456,7 +475,7 @@ const Profile = () => {
       console.log(response.data);
 
       setPosts([...posts, response.data]
-        .sort((postA, postB) => (postA.created_at > postB.created_at ? 1 : -1)));
+        .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
     } catch (err) {
       console.log(err);
     }
@@ -495,6 +514,13 @@ const Profile = () => {
             >
               <FiLogOut />
               Logout
+            </button>
+
+            <button
+              type="button"
+              onClick={() => changeModalDisplay()}
+            >
+              <GoGear />
             </button>
           </li>
         </ul>
@@ -603,12 +629,13 @@ const Profile = () => {
             <h1> Create a publish </h1>
             <textarea
               placeholder="What's happening ?"
+              value={publishText}
               onChange={(e) => { setPublishText(e.target.value); }}
               onKeyDown={(e) => autosize(e.target)}
             />
             <button
               type="button"
-              onClick={() => { handlePublish(); }}
+              onClick={() => { handlePublish(publishText); setPublishText(''); }}
             >
               Publish
             </button>
@@ -625,6 +652,9 @@ const Profile = () => {
           ))}
         </div>
       </main>
+      <ConfigDialog
+        forwardRef={configDialog}
+      />
     </PageContainer>
   );
 };
