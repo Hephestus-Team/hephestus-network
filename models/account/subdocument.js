@@ -28,6 +28,10 @@ replyMetadataSchema = new mongoose.Schema({
     name: String,
     comment: String
 }, { _id: false}),
+changeSchema = new mongoose.Schema({
+    content: String,
+    created_at: { type: Date }
+}, { _id: false}),
 commentSchema = new mongoose.Schema({
     uniqid: String,
     user: String,
@@ -36,6 +40,7 @@ commentSchema = new mongoose.Schema({
     is_reply: { type: Boolean, default: false },
     replyMetadata: replyMetadataSchema,
     likes: [likeSchema],
+    changes: [changeSchema],
     created_at: { type: Date, default: Date.now }
 }, { _id: false }),
 postSchema = mongoose.Schema({
@@ -49,6 +54,7 @@ postSchema = mongoose.Schema({
     likes: [likeSchema],
     comments: [commentSchema],
     visibility: { type: Number, default: 1},
+    changes: [changeSchema],
     created_at: { type: Date, default: Date.now }
 }, { _id: false });
 

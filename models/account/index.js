@@ -41,6 +41,25 @@ accountSchema.statics.setUniqid = function setUniqid(type) {
     }
 }
 
+accountSchema.statics.getIndexByUniqid = function getIndexByUniqid(array, value) {
+    return array.findIndex((element) => {
+        return element.uniqid === value;
+    });
+}
+
+accountSchema.statics.getCommentIndex = function getComment(Account, poster, cb) {
+    Account.findOne({uniqid: poster.uniqid}, {"posts": {$elemMatch: {uniqid: poster.post}}, _id: 0}, { lean: true }, (err, account) => {
+        if(err) { cb(err, null); }
+        if(!account) { cb(null, null); }
+
+        let posts = account.posts,
+        index = Account.getIndexByUniqid(posts[0].comments, poster.comment),
+        element = `posts.$.comments.${index}.likes`;
+
+        cb(null, element);
+    });
+}
+
 accountSchema.statics.getFriend = function getFriend(Account, friendships, cb) {
 
     let friends_uniqid = [];
@@ -63,26 +82,7 @@ accountSchema.statics.getFriend = function getFriend(Account, friendships, cb) {
     });
 }
 
-accountSchema.statics.getIndexByUniqid = function getIndexByUniqid(array, value) {
-    return array.findIndex((element) => {
-        return element.uniqid === value;
-    });
-}
-
-accountSchema.statics.getCommentIndex = function getComment(Account, poster, cb) {
-    Account.findOne({uniqid: poster.uniqid}, {"posts": {$elemMatch: {uniqid: poster.post}}, _id: 0}, { lean: true }, (err, account) => {
-        if(err) { cb(err, null); }
-        if(!account) { cb(null, null); }
-
-        let posts = account.posts,
-        index = Account.getIndexByUniqid(posts[0].comments, poster.comment),
-        element = `posts.$.comments.${index}.likes`;
-
-        cb(null, element);
-    });
-}
-
-accountSchema.statics.getPost = function getPost(Account, uniqid, cb){
+accountSchema.statics.getProfilePost = function getPostProfilePost(Account, uniqid, user, cb){
     Account.findOne({uniqid: uniqid}, {_id: 0}, (err, account) => {
         if(err) { cb(err, null); }
         if(!account) { cb(null, null); }
@@ -106,6 +106,9 @@ accountSchema.statics.getPost = function getPost(Account, uniqid, cb){
                 "posts.likes": 1,
                 "posts.comments": 1,
                 "posts.created_at": 1,
+                "posts.is_liked": {
+                    $cond: {if: {$eq: ["$posts.likes.user", user]}, then: true, else: false}
+                },
                 _id: 0
             }
         }, {$sort: { "posts.original": 1 } }], (err, accounts) => {
@@ -135,8 +138,8 @@ accountSchema.statics.getPost = function getPost(Account, uniqid, cb){
                 shares.forEach(share => {
                     let original = originals.find(original => original.uniqid == share.original);
                     delete share.original;
-    
-                    share.original = original;
+
+                    share.original = (original !== undefined) ? original : false;
                 });
     
                 posts = posts.concat(shares);
@@ -147,12 +150,12 @@ accountSchema.statics.getPost = function getPost(Account, uniqid, cb){
     });
 }
 
-accountSchema.statics.getProfile = function getProfile(Account, operator, cb) {
+accountSchema.statics.getProfile = function getProfile(Account, operator, user, cb) {
     Account.findOne(operator, { hash: 0, created_at: 0, __v: 0, _id: 0, email: 0 }, { lean: true }, (err, account) => {
         if(err) { cb(err, null); }
 
         if (account.friendships.length === 0) {
-            Account.getPost(Account, account.uniqid, (err, posts) => {
+            Account.getProfilePost(Account, account.uniqid, user, (err, posts) => {
                 if(err) { cb(err, null); }
                 delete account.posts
                 account.posts = posts;
@@ -165,7 +168,7 @@ accountSchema.statics.getProfile = function getProfile(Account, operator, cb) {
                 delete account.friendships;
                 account.friendships = friends;                
 
-                Account.getPost(Account, account.uniqid, (err, posts) => {
+                Account.getProfilePost(Account, account.uniqid, user, (err, posts) => {
                     if(err) { cb(err, null); }
                     delete account.posts
                     account.posts = posts;
