@@ -1,6 +1,6 @@
-const express = require('express'), app = express(),
-	Cors = require('cors'), morgan = require('./dev/morgan'),
-	helmet = require('helmet');
+const express = require("express"), app = express(),
+	Cors = require("cors"), morgan = require("./dev/morgan"),
+	helmet = require("helmet");
 	//  const handlebars = require('express-handlebars').create({
 	// 	defaultLayout: 'main',
 	// 	helpers: {
@@ -14,7 +14,7 @@ const express = require('express'), app = express(),
 
 app.use(morgan.morganChalk);
 app.use(helmet());
-app.use(Cors('localhost:3000'));
+app.use(Cors("localhost:3000"));
 
 // app.use(express.static(__dirname + '/public'));
 // app.engine('handlebars', handlebars.engine);
@@ -24,7 +24,7 @@ app.use(Cors('localhost:3000'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-require('./routes')(app, require('./handlers'));
+require("./routes")(app, require("./handlers"));
 
 app.use((req, res, next) => {
 	res.status(404).send({message: "This page does not exists"});

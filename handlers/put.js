@@ -1,1 +1,1 @@
-let Account = require('../models/account');
+let Account = require("../models/account");
