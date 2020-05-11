@@ -28,9 +28,9 @@ let friendshipSchema = mongoose.Schema({
 		name: String,
 		comment: String
 	}, { _id: false}),
-	changeSchema = new mongoose.Schema({
+	historySchema = new mongoose.Schema({
 		content: String,
-		created_at: { type: Date }
+		modified_at: { type: Date }
 	}, { _id: false}),
 	commentSchema = new mongoose.Schema({
 		uniqid: String,
@@ -40,7 +40,7 @@ let friendshipSchema = mongoose.Schema({
 		is_reply: { type: Boolean, default: false },
 		replyMetadata: replyMetadataSchema,
 		likes: [likeSchema],
-		changes: [changeSchema],
+		history: [historySchema],
 		created_at: { type: Date, default: Date.now }
 	}, { _id: false }),
 	postSchema = mongoose.Schema({
@@ -54,7 +54,7 @@ let friendshipSchema = mongoose.Schema({
 		likes: [likeSchema],
 		comments: [commentSchema],
 		visibility: { type: Number, default: 1},
-		changes: [changeSchema],
+		history: [historySchema],
 		created_at: { type: Date, default: Date.now }
 	}, { _id: false });
 

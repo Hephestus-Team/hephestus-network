@@ -3,9 +3,18 @@ let Account = require("../models/account"), passport = require("passport"), stra
 passport.use(strategy.signin);
 passport.use(strategy.jwt);
 
+exports.uniqid = (req, res, next) => {
+	let _id = Account.getJwtPayload(req.header("Authorization"));
+	Account.findOne({$and: [{_id: _id}, {uniqid: req.header("u")}]}, (err, account) => {
+		if(err) { return res.status(500).send({message: {database: "Internal error"}}); }
+		if(!account) { return res.status(401).send({message: {user: "Cannot perform this action"}}); }
+
+		return next();
+	});
+};
+
 exports.jwt = (req, res, next) => {
 	passport.authenticate("jwt", { session: false }, (err, account, info) => {
-        
 		if(err) { return res.status(500).send(err); }
 		if(!account) { return res.status(401).send(info); }
         
@@ -46,7 +55,7 @@ exports.local = (req, res, next) => {
 };
 
 exports.add = (req, res, next) => {
-	if(req.body.sender === req.body.receiver) res.status(409).send({message: {request: "You cannot send yourself a friendship request"}});
+	if(req.header("u") === req.body.receiver) res.status(409).send({message: {request: "You cannot send yourself a friendship request"}});
     
 	let id = Account.setUniqid("user");
 	let sended_at = new Date();
@@ -60,11 +69,11 @@ exports.add = (req, res, next) => {
 		receiverFriendship = {
 			_id: id,
 			is_sender: false,
-			friend: req.body.sender,
+			friend: req.header("u"),
 			created_at: sended_at
 		};
     
-	Account.find({$and: [{uniqid: {$in: [req.body.receiver, req.body.sender]}}, {"friendships.friend": {$in: [req.body.receiver, req.body.sender]}}]}, (err, accounts) => {
+	Account.find({$and: [{uniqid: {$in: [req.body.receiver, req.header("u")]}}, {"friendships.friend": {$in: [req.body.receiver, req.header("u")]}}]}, (err, accounts) => {
         
 		if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" }}); }
 		if(accounts.length !== 0) { return res.status(403).send({message: {user: "Already sended a friendship request to this user"}}); }
@@ -74,7 +83,7 @@ exports.add = (req, res, next) => {
 			if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
 			if(!account) { return res.status(403).send({message: {user: "User does not exist"}}); }
             
-			Account.findOneAndUpdate({uniqid: req.body.sender}, {$push: {friendships: senderFriendship}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
+			Account.findOneAndUpdate({uniqid: req.header("u")}, {$push: {friendships: senderFriendship}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
                 
 				if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" }}); }
 				if(!account) { return res.status(403).send({message: {user: "User does not exist"}}); }
@@ -92,7 +101,7 @@ exports.publish = (req, res, next) => {
 		name: req.body.name
 	};
     
-	Account.findOneAndUpdate({uniqid: req.body.uniqid}, {$push: {posts: post}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
+	Account.findOneAndUpdate({uniqid: req.header("u")}, {$push: {posts: post}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
         
 		if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" }}); }
 		if(!account) { return res.status(403).send({message: {user: "User does not exist"}}); }
@@ -109,14 +118,14 @@ exports.comment = (req, res, next) => {
 		if (!account) { return res.status(403).send({ message: { post: "This post does not exists" } }); }
         
 		//FIND SENDER
-		Account.findOne({ uniqid: req.body.sender.uniqid }, { _id: 0, uniqid: 1 }, (err, account) => {
+		Account.findOne({ uniqid: req.header("u") }, { _id: 0, uniqid: 1 }, (err, account) => {
 			if (err) { return res.status(500).send(err); }
 			if (!account) { return res.status(403).send({ message: { user: "This user does not exists" } }); }
             
 			let comment = {
 				uniqid: Account.setUniqid("post"),
 				content: req.body.sender.content,
-				user: req.body.sender.uniqid,
+				user: req.header("u"),
 				name: req.body.sender.name
 			};
             
@@ -176,17 +185,17 @@ exports.like = (req, res, next) => {
 		let postIndex = Account.getIndexByUniqid(account.posts, req.body.poster.post);
         
 		//FIND SENDER
-		Account.findOne({ uniqid: req.body.sender.uniqid }, { _id: 0, uniqid: 1 }, (err, account) => {
+		Account.findOne({ uniqid: req.header("u") }, { _id: 0, uniqid: 1 }, (err, account) => {
 			if (err) { return res.status(500).send(err); }
 			if (!account) { return res.status(403).send({ message: { user: "This user does not exists" } }); }
             
 			let like = {
-				user: req.body.sender.uniqid,
+				user: req.header("u"),
 				name: req.body.sender.name
 			};
             
 			if (req.params.type === "post") {
-				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post, "posts.likes.user": {$ne: req.body.sender.uniqid}} },
+				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post, "posts.likes.user": {$ne: req.header("u")}} },
 					{
 						$project: {
 							uniqid: 1,
@@ -206,7 +215,7 @@ exports.like = (req, res, next) => {
 					});
 				});
 			} else if (req.params.type === "comment") {
-				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post, "posts.comments.uniqid": req.body.poster.comment, "posts.comments.likes.user": {$ne: req.body.sender.uniqid}} },
+				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post, "posts.comments.uniqid": req.body.poster.comment, "posts.comments.likes.user": {$ne: req.header("u")}} },
 					{
 						$project: {
 							uniqid: 1,
@@ -273,7 +282,7 @@ exports.share = (req, res, next) => {
 			created_at: shared_at
 		},
 		share = {
-			user: req.body.sender.uniqid,
+			user: req.header("u"),
 			name: req.body.sender.name,
 			post: post.uniqid,
 			created_at: shared_at
@@ -286,7 +295,7 @@ exports.share = (req, res, next) => {
 		let index = Account.getIndexByUniqid(account.posts, req.body.poster.post),
 			original = account.posts[index];
         
-		Account.findOneAndUpdate({uniqid: req.body.sender.uniqid}, {$push: {"posts": post}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
+		Account.findOneAndUpdate({uniqid: req.header("u")}, {$push: {"posts": post}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
             
 			if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
             

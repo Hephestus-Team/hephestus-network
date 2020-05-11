@@ -3,26 +3,23 @@ module.exports = (app, handlers) => {
 		res.status(200).send("Express server running !");
 	});
 
-	app.get("/u/(:uniqid)?", handlers.Post.jwt, handlers.Get.profile);
+	app.get("/u/(:uniqid)?", handlers.Post.jwt, handlers.Post.uniqid, handlers.Get.profile);
 	app.get("/publish/:uniqid", handlers.Post.jwt, handlers.Get.publish);
 
 	app.post("/signup", handlers.Post.signup);
 	app.post("/signin", handlers.Post.local);
-	app.post("/add", handlers.Post.jwt, handlers.Post.add);
-	app.post("/publish", handlers.Post.jwt, handlers.Post.publish);
-	app.post("/like/:type", handlers.Post.jwt, handlers.Post.like);
-	app.post("/comment/(:type)?", handlers.Post.jwt, handlers.Post.comment);
-	app.post("/share", handlers.Post.jwt, handlers.Post.share);
+	app.post("/add", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.add);
+	app.post("/publish", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.publish);
+	app.post("/like/:type", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.like);
+	app.post("/comment/(:type)?", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.comment);
+	app.post("/share", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.share);
 
-	app.delete("/add", handlers.Post.jwt, handlers.Delete.add);
-	app.delete("/publish", handlers.Post.jwt, handlers.Delete.publish);
-	// TO-DO
-	// app.post('/comment/(:type)?', handlers.Post.jwt, handlers.Post.comment);
-	// app.delete('/like/:type', handlers.Post.jwt, handlers.Post.like);
+	app.delete("/add/:uniqid", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.add);
+	app.delete("/publish", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.publish);
+	app.delete("/like/:post/(:comment)?", handlers.Post.jwt, handlers.Delete.like);
 
-	app.patch("/add", handlers.Post.jwt, handlers.Patch.add);
-	app.patch("/publish", handlers.Post.jwt, handlers.Patch.publish);
-	// TO-DO
-	// app.patch('/u/(:uniqid)?', handlers.Post.jwt, handlers.Patch.profile);
-	// app.patch('/comment/(:type)?', handlers.Post.jwt, handlers.Post.comment);
+	app.patch("/add", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.add);
+	app.patch("/publish", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.publish);
+	app.patch("/u/(:uniqid)?", handlers.Post.jwt, handlers.Patch.profile);
+	app.patch("/comment", handlers.Post.jwt, handlers.Patch.comment);
 };

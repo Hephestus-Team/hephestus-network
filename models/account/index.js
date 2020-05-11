@@ -1,5 +1,5 @@
 const mongoose = require("mongoose"), bcrypt = require("bcrypt"), 
-	uniqid = require("uniqid"), subdocument = require("./subdocument");
+	uniqid = require("uniqid"), subdocument = require("./subdocument"), jwt = require("jsonwebtoken");
 
 let accountSchema = mongoose.Schema({
 	uniqid: String,
@@ -105,10 +105,10 @@ accountSchema.statics.getProfilePost = function getPostProfilePost(Account, uniq
 					"posts.shares": 1,
 					"posts.likes": 1,
 					"posts.comments": 1,
-					"posts.created_at": 1,
 					"posts.is_liked": {
 						$cond: {if: {$eq: ["$posts.likes.user", user]}, then: true, else: false}
 					},
+					"posts.poster": account.uniqid,
 					_id: 0
 				}
 			}, {$sort: { "posts.original": 1 } }], (err, accounts) => {
@@ -178,6 +178,11 @@ accountSchema.statics.getProfile = function getProfile(Account, operator, user, 
 			});
 		}
 	});
+};
+
+accountSchema.statics.getJwtPayload = function getJwtPayload(header_token) {
+	let token = header_token.split(" ")[1];
+	return jwt.verify(token, require("../../credentials/cfg").jwt.jwtSecret).id;
 };
 
 let Account = mongoose.model("Account", accountSchema);

@@ -34,6 +34,6 @@ exports.jwt = new JwtStrategy(opts, (jwt_payload, done) => {
 	Account.findOne({_id: jwt_payload.id}, (err, account) => {
 		if(err) { return done(err); }
 		if(!account) { return done(null, false, {message: "Not logged in"}); }
-		return done(null, account, {message: {user: "Logged in"}});
+		return done(null, jwt_payload.id, {message: {user: "Logged in"}});
 	});
 });
