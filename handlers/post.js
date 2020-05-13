@@ -100,26 +100,25 @@ exports.publish = (req, res, next) => {
 		content: req.body.content,
 		name: req.body.name
 	};
-    
-	Account.findOneAndUpdate({uniqid: req.header("u")}, {$push: {posts: post}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
-        
-		if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" }}); }
-		if(!account) { return res.status(403).send({message: {user: "User does not exist"}}); }
-        
-		let index = account.posts.length - 1;
-		return res.status(201).send(account.posts[index]);
+
+	Account.findOneAndUpdate({ uniqid: req.header("u") }, { $push: { posts: post } }, { new: true, setDefaultsOnInsert: true }, (err, account) => {
+		if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
+		if (!account) { return res.status(403).send({ message: { post: "Cannot post" } }); }
+
+		let postIndex = Account.getIndexByUniqid(account.posts, post.uniqid);
+		return res.status(200).send(account.posts[postIndex]);
 	});
 };
 
 exports.comment = (req, res, next) => {
 	// FIND POSTER AND POST
 	Account.findOne({ uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post }, { _id: 0, uniqid: 1 }, (err, account) => {
-		if (err) { return res.status(500).send(err); }
+		if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 		if (!account) { return res.status(403).send({ message: { post: "This post does not exists" } }); }
         
 		//FIND SENDER
 		Account.findOne({ uniqid: req.header("u") }, { _id: 0, uniqid: 1 }, (err, account) => {
-			if (err) { return res.status(500).send(err); }
+			if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 			if (!account) { return res.status(403).send({ message: { user: "This user does not exists" } }); }
             
 			let comment = {
@@ -130,6 +129,7 @@ exports.comment = (req, res, next) => {
 			};
             
 			if (req.params.type === undefined) {
+				//SAVE COMMENT
 				Account.findOneAndUpdate({ uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post }, { $push: { "posts.$.comments": comment } }, { new: true, setDefaultsOnInsert: true }, (err, account) => {
 					if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 					if (!account) { return res.status(403).send({ message: { comment: "Cannot comment" } }); }
@@ -137,7 +137,7 @@ exports.comment = (req, res, next) => {
 					let postIndex = Account.getIndexByUniqid(account.posts, req.body.poster.post);
 					let commentIndex = Account.getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
                     
-					return res.status(201).send(account.posts[postIndex].comments[commentIndex]);
+					return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 				});
 			} else if(req.params.type === "reply") {
 				let replyMetadata = {
@@ -148,7 +148,8 @@ exports.comment = (req, res, next) => {
                 
 				comment.is_reply = true;
 				comment.replyMetadata = replyMetadata;
-                
+				
+				//FIND COMMENT
 				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.comments.uniqid": req.body.commentator.comment, "posts.comment.user": req.body.commentator.uniqid } },
 					{
 						$project: {
@@ -156,17 +157,18 @@ exports.comment = (req, res, next) => {
 							_id: 0
 						}
 					}], (err, account) => {
-					if (err) { return res.status(500).send(err); }
+					if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 					if (account.length === 0) { return res.status(403).send({ message: { comment: "Comment does not exists" } }); }
-                    
+					
+					//SAVE REPLY
 					Account.findOneAndUpdate({ uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post }, { $push: { "posts.$.comments": comment } }, { new: true, setDefaultsOnInsert: true }, (err, account) => {
 						if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
-						if (!account) { return res.status(403).send({ message: { cooment: "Cannot comment" } }); }
+						if (!account) { return res.status(403).send({ message: { comment: "Cannot comment" } }); }
                         
 						let postIndex = Account.getIndexByUniqid(account.posts, req.body.poster.post);
 						let commentIndex = Account.getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
                         
-						return res.status(201).send(account.posts[postIndex].comments[commentIndex]);
+						return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 					});
 				});
 			}else{
@@ -179,14 +181,14 @@ exports.comment = (req, res, next) => {
 exports.like = (req, res, next) => {
 	// FIND POSTER AND POST
 	Account.findOne({ uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post }, { _id: 0, uniqid: 1, posts: 1 }, (err, account) => {
-		if (err) { return res.status(500).send({ message: { database: "Internal error" } }); }
+		if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 		if (!account) { return res.status(403).send({ message: { post: "This post does not exists" } }); }
         
 		let postIndex = Account.getIndexByUniqid(account.posts, req.body.poster.post);
         
 		//FIND SENDER
 		Account.findOne({ uniqid: req.header("u") }, { _id: 0, uniqid: 1 }, (err, account) => {
-			if (err) { return res.status(500).send(err); }
+			if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 			if (!account) { return res.status(403).send({ message: { user: "This user does not exists" } }); }
             
 			let like = {
@@ -195,7 +197,8 @@ exports.like = (req, res, next) => {
 			};
             
 			if (req.params.type === "post") {
-				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post, "posts.likes.user": {$ne: req.header("u")}} },
+				//CHECK IF USER ALREADY LIKED THE POST
+				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post, "posts.likes.user": req.header("u")} },
 					{
 						$project: {
 							uniqid: 1,
@@ -203,19 +206,19 @@ exports.like = (req, res, next) => {
 						}
 					}], (err, account) => {
 					if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
-					if (account.length === 0) { return res.status(409).send({ message: { like: "You already liked this post" } }); }
-                
+					if (account.length !== 0) { return res.status(409).send({ message: { like: "You already liked this post" } }); }
+					
+					//SAVE LIKE
 					Account.findOneAndUpdate({ uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post, }, { $push: { "posts.$.likes": like } }, { new: true, setDefaultsOnInsert: true }, (err, account) => {
 						if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 						if (!account) { return res.status(403).send({ message: { like: "Cannot like" } }); }
                         
-						let likeIndex = Account.getIndexByUniqid(account.posts[postIndex].likes, like.uniqid);
-                        
-						return res.status(201).send(account.posts[postIndex].likes[likeIndex]);
+						return res.status(200).send(account.posts[postIndex]);
 					});
 				});
 			} else if (req.params.type === "comment") {
-				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post, "posts.comments.uniqid": req.body.poster.comment, "posts.comments.likes.user": {$ne: req.header("u")}} },
+				//CHECK IF USER ALREADY LIKED THE COMMENT
+				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post, "posts.comments.uniqid": req.body.commentator.comment, "posts.comments.likes.user": req.header("u")} },
 					{
 						$project: {
 							uniqid: 1,
@@ -223,8 +226,9 @@ exports.like = (req, res, next) => {
 						}
 					}], (err, account) => {
 					if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
-					if (account.length === 0) { return res.status(409).send({ message: { like: "You already liked this comment" } }); }
-
+					if (account.length !== 0) { return res.status(409).send({ message: { like: "You already liked this comment" } }); }
+					
+					//RETRIEVE POST
 					Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.uniqid": req.body.poster.post } },
 						{
 							$project: {
@@ -232,25 +236,26 @@ exports.like = (req, res, next) => {
 								_id: 0
 							}
 						}], (err, account) => {
-						if (err) { return res.status(500).send({ message: { database: "Internal error" } }); }
+						if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 						if (account.length === 0) { return res.status(403).send({ message: { post: "Post does not exists" } }); }
                     
 						let post = account.map(account => account.posts)[0];
                     
-						let commentIndex = Account.getIndexByUniqid(post.comments, req.body.poster.comment);
+						let commentIndex = Account.getIndexByUniqid(post.comments, req.body.commentator.comment);
                     
 						let commentQuery = `posts.${postIndex}.comments.${commentIndex}.likes`;
 						let postQuery = `posts.${postIndex}.comments.uniqid`;
 
 						if(commentIndex !== -1){
+
+							//SAVE LIKE
 							Account.findOneAndUpdate({ uniqid: req.body.poster.uniqid, [postQuery]: req.body.poster.comment }, { $push: { [commentQuery]: like } }, { new: true, setDefaultsOnInsert: true }, (err, account) => {
 								if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 								if (!account) { return res.status(403).send({ message: { comment: "Cannot like" } }); }
                             
 								let commentIndex = Account.getIndexByUniqid(account.posts[postIndex].comments, req.body.poster.comment);
-								let likeIndex = Account.getIndexByUniqid(account.posts[postIndex].comments[commentIndex].likes, like.uniqid);
                             
-								return res.status(201).send(account.posts[postIndex].comments[commentIndex].likes[likeIndex]);                    
+								return res.status(200).send(account.posts[postIndex].comments[commentIndex]);                           
 							});
 						}else{
 							return res.status(403).send({ message: { comment: "Comment does not exists" } });
@@ -287,21 +292,20 @@ exports.share = (req, res, next) => {
 			post: post.uniqid,
 			created_at: shared_at
 		};
-    
+	//SAVE SHARE IN ORIGINAL
 	Account.findOneAndUpdate({uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post}, {$push: {"posts.$.shares": share}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
 		if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
 		if(!account) { return res.status(403).send({message: {user: "Post or user does not exist"}}); }
         
-		let index = Account.getIndexByUniqid(account.posts, req.body.poster.post),
-			original = account.posts[index];
-        
+		let postIndex = Account.getIndexByUniqid(account.posts, req.body.poster.post),
+			original = account.posts[postIndex];
+		//SAVE POST
 		Account.findOneAndUpdate({uniqid: req.header("u")}, {$push: {"posts": post}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
-            
 			if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
             
-			let index = account.posts.length - 1;
+			let postIndex = Account.getIndexByUniqid(account.posts, post.uniqid);
             
-			return res.status(201).send({share: account.posts[index], original: original});
+			return res.status(200).send({share: account.posts[postIndex], original: original});
 		});
 	});
 };
