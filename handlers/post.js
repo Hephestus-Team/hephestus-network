@@ -47,7 +47,7 @@ exports.signup = (req, res, next) => {
 exports.local = (req, res, next) => {
 	passport.authenticate("local", { session: false }, (err, account, info) => {
         
-		if(err) { return res.status(500).send(err); }
+		if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 		if(!account) { return res.status(401).send(info); }
         
 		return res.status(201).send(info);
@@ -61,13 +61,13 @@ exports.add = (req, res, next) => {
 	let sended_at = new Date();
     
 	let senderFriendship = {
-			_id: id,
+			uniqid: id,
 			is_sender: true,
 			friend: req.body.receiver,
 			created_at: sended_at
 		},
 		receiverFriendship = {
-			_id: id,
+			uniqid: id,
 			is_sender: false,
 			friend: req.header("u"),
 			created_at: sended_at
@@ -150,7 +150,7 @@ exports.comment = (req, res, next) => {
 				comment.replyMetadata = replyMetadata;
 				
 				//FIND COMMENT
-				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.comments.uniqid": req.body.commentator.comment, "posts.comment.user": req.body.commentator.uniqid } },
+				Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.comments.uniqid": req.body.commentator.comment, "posts.comments.user": req.body.commentator.uniqid } },
 					{
 						$project: {
 							uniqid: 1,
@@ -253,7 +253,7 @@ exports.like = (req, res, next) => {
 								if (err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 								if (!account) { return res.status(403).send({ message: { comment: "Cannot like" } }); }
                             
-								let commentIndex = Account.getIndexByUniqid(account.posts[postIndex].comments, req.body.poster.comment);
+								let commentIndex = Account.getIndexByUniqid(account.posts[postIndex].comments, req.body.commentator.comment);
                             
 								return res.status(200).send(account.posts[postIndex].comments[commentIndex]);                           
 							});
@@ -295,7 +295,7 @@ exports.share = (req, res, next) => {
 	//SAVE SHARE IN ORIGINAL
 	Account.findOneAndUpdate({uniqid: req.body.poster.uniqid, "posts.uniqid": req.body.poster.post}, {$push: {"posts.$.shares": share}}, {new: true, setDefaultsOnInsert: true}, (err, account) => {
 		if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
-		if(!account) { return res.status(403).send({message: {user: "Post or user does not exist"}}); }
+		if(!account) { return res.status(403).send({message: {user: "This post does not exist"}}); }
         
 		let postIndex = Account.getIndexByUniqid(account.posts, req.body.poster.post),
 			original = account.posts[postIndex];

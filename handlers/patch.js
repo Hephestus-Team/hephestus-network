@@ -11,7 +11,7 @@ exports.add = (req, res, next) => {
 			if(err) { console.log(err); res.status(500).send({ message: { database: "Internal error" }}); }
 			if(!account) { return res.status(403).send({message: {user: "Request does not exist"}}); }
 
-			Account.updateMany({uniqid: [req.body.receiver, req.header("u")], "friendships._id": account.friendships[0]._id}, {$set: {"friendships.0.is_accepted": true}, $unset: {"friendships.0.is_sender": ""}}, (err, account) => {
+			Account.updateMany({uniqid: [req.body.receiver, req.header("u")], "friendships.uniqid": account.friendships[0].uniqid}, {$set: {"friendships.0.is_accepted": true}, $unset: {"friendships.0.is_sender": ""}}, (err, account) => {
 				if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" }}); }
 				if(!account) { return res.status(403).send({message: {user: "Friendship request does not exist"}}); }
 
@@ -23,13 +23,28 @@ exports.add = (req, res, next) => {
 
 exports.profile = (req, res, next) => {
 	if(req.header("u") === req.params.uniqid || (req.params.uniqid === undefined && req.header("u")) ){
-		Account.findOneAndUpdate({uniqid: req.header("u")}, req.body.user, {new: true}, (err, account) => {
-            
-			if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
-			delete account._id, account.hash, account.email;
+		
+		let dictionary = ["bio", "username", "birthday"];
+		let properties = Object.getOwnPropertyNames(req.body.user);
+		let keys_matches = true;
 
-			return res.status(200).send(account);
+		properties.forEach((property) => {
+			if(!(dictionary.includes(property))){
+				keys_matches = false;
+			}
 		});
+
+		if(keys_matches){
+			Account.findOneAndUpdate({uniqid: req.header("u")}, req.body.user, {new: true}, (err, account) => {
+            
+				if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
+				delete account._id, account.hash, account.email;
+
+				return res.status(200).send(req.body.user);
+			});
+		}else{
+			return res.status(400).send({message: {user: "You cannot change other information besides your bio, username or birthday"}});
+		}
 	}else{
 		return res.status(401).send({message: {user: "You cannot change another user information"}});
 	}
@@ -43,9 +58,13 @@ exports.publish = (req, res, next) => {
 		if(!account) { return res.status(403).send({message: {post: "This post does not exists"}}); }
 
 		let posts = account.map(account => {return {content: account.posts.content, modified_at: new Date()};});
-		let old_content = posts[0];
+		let old_post = posts[0];
 
-		Account.findOneAndUpdate({uniqid: req.header("u"), "posts.uniqid": req.body.post.uniqid}, {$set: {"posts.$.content": req.body.post.content}, $push: {"posts.$.history": old_content}}, {new: true}, (err, account) => {
+		if(old_post.content === req.body.post.content) {
+			return res.status(400).send({message: {post: "You do not change the post content"}});
+		}
+
+		Account.findOneAndUpdate({uniqid: req.header("u"), "posts.uniqid": req.body.post.uniqid}, {$set: {"posts.$.content": req.body.post.content}, $push: {"posts.$.history": old_post}}, {new: true}, (err, account) => {
 			if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
 			if(!account) { return res.status(403).send({message: {post: "This post does not exists"}}); }
 			
@@ -65,7 +84,7 @@ exports.comment = (req, res, next) => {
 		} 
 	}], (err, account) => {
 		if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
-		if(account.length === 0) { return res.status(403).send({message: {post: "This post does not exists"}}); }
+		if(account.length === 0) { return res.status(403).send({message: {comment: "This comment does not exists"}}); }
 	
 		let post = account.map(account => account.posts)[0];
 		let posterUniqid = account[0].uniqid;
@@ -75,9 +94,13 @@ exports.comment = (req, res, next) => {
 		let queryContent = `posts.${postIndex}.comments.${commentIndex}.content`;
 		let queryHistory = `posts.${postIndex}.comments.${commentIndex}.history`;
 	
-		let old_content = { content: post.comments[commentIndex].content, modified_at: new Date() };
-	
-		Account.findOneAndUpdate({uniqid: posterUniqid, "posts.uniqid": req.body.post.uniqid}, {$set: {[queryContent]: req.body.comment.content}, $push: {[queryHistory]: old_content}}, {new: true}, (err, account) => {
+		let old_comment = { content: post.comments[commentIndex].content, modified_at: new Date() };
+
+		if(old_comment.content === req.body.comment.content) {
+			return res.status(400).send({message: {post: "You do not change the comment content"}});
+		}
+
+		Account.findOneAndUpdate({uniqid: posterUniqid, "posts.uniqid": req.body.post.uniqid}, {$set: {[queryContent]: req.body.comment.content}, $push: {[queryHistory]: old_comment}}, {new: true}, (err, account) => {
 			if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
 			if(!account) { return res.status(403).send({message: {post: "This post does not exists"}}); }
 

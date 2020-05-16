@@ -15,11 +15,11 @@ module.exports = (app, handlers) => {
 	app.post("/share", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.share);
 
 	app.delete("/add/:uniqid", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.add);
-	app.delete("/publish", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.publish);
-	app.delete("/like/:post/(:comment)?", handlers.Post.jwt, handlers.Delete.like);
+	app.delete("/publish/:uniqid", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.publish);
+	app.delete("/like/:post/(:comment)?", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.like);
 
 	app.patch("/add", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.add);
 	app.patch("/publish", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.publish);
-	app.patch("/u/(:uniqid)?", handlers.Post.jwt, handlers.Patch.profile);
-	app.patch("/comment", handlers.Post.jwt, handlers.Patch.comment);
+	app.patch("/u/(:uniqid)?", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.profile);
+	app.patch("/comment", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.comment);
 };

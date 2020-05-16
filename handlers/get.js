@@ -71,6 +71,7 @@ exports.publish = (req, res, next) => {
 
 		let posts = account.map((account => account.posts));
 		let post = posts[0];
+		post.is_poster = (account[0].uniqid === req.header("u")) ? true : false;
 		post.user = account[0].uniqid;
 
 		return res.status(200).send(post);

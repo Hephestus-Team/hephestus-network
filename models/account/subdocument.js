@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 let friendshipSchema = mongoose.Schema({
-		_id: String,
+		uniqid: String,
 		friend: String,
 		is_accepted: { type: Boolean, default: false },
 		is_sender: Boolean,
