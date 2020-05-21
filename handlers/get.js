@@ -1,10 +1,15 @@
 let Account = require("../models/account");
 
-exports.profile = (req, res, next) => {
+exports.profile = function(req, res, next){
 	let self_profile = Boolean(req.header("u") === req.params.uniqid || (req.params.uniqid === undefined && req.header("u")));
 
+	let user = {
+		uniqid: req.header("u"),
+		relationship: req.locals.relationship
+	};
+
 	if(self_profile){
-		Account.getProfile(Account, { $or: [ { uniqid: {$in: [req.params.uniqid, req.header("u")]} }, { username: req.params.uniqid } ] }, req.header("u"), (err, account) => {
+		Account.getProfile({ $or: [ { uniqid: {$in: [req.params.uniqid, req.header("u")]} }, { username: req.params.uniqid } ] }, user, function(err, account){
 			if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 			if (!account) { return res.status(404).send({ message: { user: "User does not exist" } }); }
             
@@ -22,7 +27,7 @@ exports.profile = (req, res, next) => {
 			let is_friend = Boolean(account.friendships.find(friendship => friendship.friend === req.header("u")));
 
 			if(is_friend) {
-				Account.getProfile(Account, { $or: [ { uniqid: {$eq: req.params.uniqid} }, { username: req.params.uniqid } ] }, req.header("u"), (err, account) => {
+				Account.getProfile({ $or: [ { uniqid: {$eq: req.params.uniqid} }, { username: req.params.uniqid } ] }, user, (err, account) => {
 					if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 					if (!account) { return res.status(404).send({ message: { user: "User does not exist" } }); }
                     
@@ -32,7 +37,7 @@ exports.profile = (req, res, next) => {
 				});
 
 			}else{
-				Account.getProfile(Account, { $or: [ { uniqid: {$eq: req.params.uniqid} }, { username: req.params.uniqid } ] }, req.header("u"), (err, account) => {
+				Account.getProfile({ $or: [ { uniqid: {$eq: req.params.uniqid} }, { username: req.params.uniqid } ] }, user, (err, account) => {
 					if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
 					if(!account) { return res.status(404).send({ message: { user: "User does not exist" } }); }
 

@@ -45,7 +45,6 @@ let friendshipSchema = mongoose.Schema({
 	}, { _id: false }),
 	postSchema = mongoose.Schema({
 		uniqid: String,
-		poster: String,
 		name: String,
 		content: String,
 		is_share: { type: Boolean, default: false },

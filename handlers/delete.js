@@ -62,3 +62,28 @@ exports.like = (req, res, next) => {
 		});
 	});
 };
+
+exports.comment = (req, res, next) => {
+	Account.aggregate([{$unwind: "$posts"}, {$match: {"posts.comments.uniqid": req.params.uniqid, "posts.comments.user": req.header("u")}}, {
+		$project: { 
+			_id: 0,
+			uniqid: 1,
+			posts: 1
+		} 
+	}], (err, account) => {
+		if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
+		if(account.length === 0) { return res.status(403).send({message: {comment: "This comment does not exists"}}); }
+	
+		let post = account.map(account => account.posts)[0];
+		let posterUniqid = account[0].uniqid;
+		let commentIndex = Account.getIndexByUniqid(post.comments, req.params.uniqid);
+		let commentUniqid = post.comments[commentIndex].uniqid;
+
+		Account.findOneAndUpdate({uniqid: posterUniqid}, {$pull: {"posts": {"comments": {"uniqid": commentUniqid}}}}, (err, account) => {
+			if(err) { console.log(err.errmsg); return res.status(500).send({ message: { database: "Internal error" }}); }
+			if(!account) { return res.status(403).send({message: {post: "Comment does not exists"}}); }
+	
+			return res.status(204).send({message: {comment: "Comment deleted"}});
+		});
+	});
+};

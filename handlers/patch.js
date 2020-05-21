@@ -24,7 +24,7 @@ exports.add = (req, res, next) => {
 exports.profile = (req, res, next) => {
 	if(req.header("u") === req.params.uniqid || (req.params.uniqid === undefined && req.header("u")) ){
 		
-		let dictionary = ["bio", "username", "birthday"];
+		let dictionary = ["bio", "username", "birthday", "first_name", "last_name", "visibility"];
 		let properties = Object.getOwnPropertyNames(req.body.user);
 		let keys_matches = true;
 
