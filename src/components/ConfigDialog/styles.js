@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 export const Container = styled.div`
-  display: none;
+  display: ${(props) => (props.open ? 'block' : 'none')};
   position: fixed;
   z-index: 5;
   padding-top: 100px;
@@ -159,7 +159,7 @@ export const Container = styled.div`
   }
 
   div.configContent div.editting div div {
-    width: 100%;
+    width: 250px;
   }
 
   div.configContent div.editting div div + div {
@@ -167,16 +167,7 @@ export const Container = styled.div`
   }
 
   div.configContent div.editting div div input {
-    width: 100%;
-    height: 34px;
-    font-size: 16px;
-    color: #666;
-    padding: 0 4px;
-    margin-top: 10px;
     background: none;
-
-    border: 0;
-    border-bottom: 1px solid #CCC;
   }
 
   div.configContent div.editting div div.editButtons {

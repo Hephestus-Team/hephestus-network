@@ -12,46 +12,64 @@ import {
 
 import { Container } from './styles';
 
-const ConfigDialog = ({ forwardRef }) => {
-  const changeModalDisplay = () => {
-    if (forwardRef.current.style.display === 'block' && forwardRef.current.style.display) {
-      forwardRef.current.style.display = 'none';
+import Input from '../Input';
+
+const ConfigDialog = ({ open, setOpenConfig }) => {
+  const [editProfile, setEditProfile] = useState({
+    email: false,
+    password: false,
+  });
+
+  const [newPassword, setNewPassword] = useState('');
+  const [confPassword, setConfPassword] = useState({
+    value: '',
+    error: '',
+  });
+  const [email, setEmail] = useState('');
+
+  const handlePasswordSave = () => {
+    if (newPassword !== confPassword.value) {
+      setConfPassword({
+        ...confPassword,
+        error: 'Passwords does not match',
+      });
     } else {
-      forwardRef.current.style.display = 'block';
+      console.log(newPassword);
+      setNewPassword('');
+      setConfPassword({
+        value: '',
+        error: '',
+      });
+      setEditProfile({
+        ...editProfile,
+        password: !editProfile.password,
+      });
     }
   };
 
-  const [editProfile, setEditProfile] = useState({
-    email: {
-      value: 'danielp.arruda@gmail.com',
-      editting: false,
-    },
-    password: {
-      value: '',
-      editting: false,
-    },
-  });
-
   return (
-    <Container ref={forwardRef}>
+    <Container open={open}>
       <div className="configContent">
-        <FiX onClick={() => { changeModalDisplay(); }} />
-        { editProfile.email.editting
+        <FiX onClick={() => { setOpenConfig(false); }} />
+        { editProfile.email
           ? (
             <div className="gridEdit gridEditting">
               <strong> E-mail </strong>
-              <input type="email" placeholder="Type your new email" />
+              <input
+                type="email"
+                placeholder="Type your new email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
               <div className="editButtons">
                 <div>
                   <button
                     type="button"
                     onClick={() => {
+                      setEmail('');
                       setEditProfile({
                         ...editProfile,
-                        email: {
-                          value: editProfile.email.value,
-                          editting: !editProfile.email.editting,
-                        },
+                        email: !editProfile.email,
                       });
                     }}
                   >
@@ -60,12 +78,10 @@ const ConfigDialog = ({ forwardRef }) => {
                   <button
                     type="button"
                     onClick={() => {
+                      setEmail('');
                       setEditProfile({
                         ...editProfile,
-                        email: {
-                          value: editProfile.email.value,
-                          editting: !editProfile.email.editting,
-                        },
+                        email: !editProfile.email,
                       });
                     }}
                   >
@@ -78,19 +94,14 @@ const ConfigDialog = ({ forwardRef }) => {
           : (
             <div className="gridEdit">
               <strong> E-mail </strong>
-              <p>
-                {editProfile.email.value}
-              </p>
+              <p />
               <button
                 type="button"
                 className="toEditButton"
                 onClick={() => {
                   setEditProfile({
                     ...editProfile,
-                    email: {
-                      value: editProfile.email.value,
-                      editting: !editProfile.email.editting,
-                    },
+                    email: !editProfile.email,
                   });
                 }}
               >
@@ -102,32 +113,41 @@ const ConfigDialog = ({ forwardRef }) => {
             </div>
           )}
 
-        { editProfile.password.editting
+        { editProfile.password
           ? (
             <div className="editting">
               <strong> Password </strong>
               <div>
                 <div>
-                  <strong> New Password </strong>
-                  <input type="password" placeholder="Type your new password" />
+                  <Input
+                    type="password"
+                    placeholder="Type your new password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    labelText="New Password"
+                  />
                 </div>
 
                 <div>
-                  <strong> Confirm Password </strong>
-                  <input type="password" placeholder="Confirm your password" />
+                  <Input
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={confPassword.value}
+                    onChange={(e) => setConfPassword({
+                      ...confPassword,
+                      value: e.target.value,
+                    })}
+                    error={confPassword.error}
+                    labelText="Confirm Password"
+                  />
                 </div>
+
                 <div className="editButtons">
                   <div>
                     <button
                       type="button"
                       onClick={() => {
-                        setEditProfile({
-                          ...editProfile,
-                          password: {
-                            value: editProfile.password.value,
-                            editting: !editProfile.password.editting,
-                          },
-                        });
+                        handlePasswordSave();
                       }}
                     >
                       Save
@@ -135,12 +155,14 @@ const ConfigDialog = ({ forwardRef }) => {
                     <button
                       type="button"
                       onClick={() => {
+                        setNewPassword('');
+                        setConfPassword({
+                          value: '',
+                          error: '',
+                        });
                         setEditProfile({
                           ...editProfile,
-                          password: {
-                            value: editProfile.password.value,
-                            editting: !editProfile.password.editting,
-                          },
+                          password: !editProfile.password,
                         });
                       }}
                     >
@@ -162,10 +184,7 @@ const ConfigDialog = ({ forwardRef }) => {
                   onClick={() => {
                     setEditProfile({
                       ...editProfile,
-                      password: {
-                        value: editProfile.password.value,
-                        editting: !editProfile.password.editting,
-                      },
+                      password: !editProfile.password,
                     });
                   }}
                 >

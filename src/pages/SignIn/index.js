@@ -2,12 +2,12 @@ import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import * as Yup from 'yup';
 import { useDispatch } from 'react-redux';
+import axios from 'axios';
 
 import InputForm from '../../components/InputForm';
 import { Form } from './styles';
 
 import { signIn } from '../../store/actions/user';
-import api from '../../services/api';
 
 const SignIn = () => {
   const formRef = useRef(null);
@@ -16,7 +16,7 @@ const SignIn = () => {
 
   const apiCalling = async (data) => {
     try {
-      const response = await api.post('/signin', data);
+      const response = await axios.post('http://localhost:3333/signin', data);
 
       dispatch(signIn(response.data));
       window.location.reload(false);

@@ -1,10 +1,10 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState, useRef } from 'react';
+import axios from 'axios';
 import { useHistory } from 'react-router-dom';
 
 import * as Yup from 'yup';
 import InputForm from '../../components/InputForm';
-import api from '../../services/api';
 
 import { Form } from './styles';
 
@@ -16,7 +16,7 @@ const SignUp = () => {
 
   const apiCalling = async (data) => {
     try {
-      await api.post('/signup', data);
+      await axios.post('http://localhost:3333/signup', data);
 
       history.push('/');
     } catch (err) {

@@ -5,6 +5,8 @@ export const ChatStyle = styled.div`
     right: 20vw;
     position: fixed;
 
+    z-index: 1;
+
     font-size: 14px;
 
     background-color: #FFFFFF;

@@ -45,10 +45,6 @@ export const PageContainer = styled.div`
     font-size: 0.9rem;
   }
 
-  aside .bio {
-    margin: 10px 0;
-  }
-
   aside div div svg {
     margin-top: 6px;
 
@@ -76,6 +72,10 @@ export const PageContainer = styled.div`
     color: #fff;
 
     cursor: pointer;
+  }
+
+  aside div.birthday {
+    margin-top: 8px
   }
 
   .email input, .birthday input {
@@ -193,58 +193,6 @@ export const PageContainer = styled.div`
     align-items: center;
 
     max-width: 40vw;
-  }
-
-  .feed {
-    width: 100%;
-  }
-
-  .feed .post:first-child {
-    margin-top: 0;
-  }
-
-  .feed .publish {
-    background-color: #FFF;
-    padding: 15px;
-
-    display: flex;
-    flex-direction: column;
-
-    box-shadow: 5px 5px 7px #888888;
-  }
-
-  .feed .publish h1 {
-    font-size: 24px;
-    margin-bottom: 15px;
-  }
-
-  .feed .publish textarea {
-    height: auto;
-    width: 98%;
-    margin-bottom: 15px;
-
-    font-size: 18px;
-    font-family: Roboto,sans-serif;
-    color: #000;
-
-    resize: none;
-    overflow: hidden;
-    border: 0;
-    border-bottom: 2px solid #eef;
-
-    align-self: center;
-  }
-
-  .feed .publish button {
-    border: 0;
-    border-radius: 2px;
-    background: #05ade0;
-    padding: 6px 18px;
-    font-size: 15px;
-    color: #fff;
-    cursor: pointer;
-
-    align-self: flex-end;
   }
 
   @media only screen and (max-width: 1200px) {

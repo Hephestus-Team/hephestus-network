@@ -15,7 +15,7 @@ export const GlobalStyle = createGlobalStyle`
     }
 
     body, input, button{
-        font-family: Roboto, sans-serif;
+        font-family: Roboto, Arial, sans-serif;
     }
 `;
 
