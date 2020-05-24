@@ -116,8 +116,8 @@ export const NavBarContainer = styled.nav`
   ul li:last-child  button svg {
     margin-right: 6px;
 
-    width: 1rem;
-    height: 1rem;
+    width: 16px;
+    height: 16px;
   }
 
   ul li:first-child button {
@@ -139,7 +139,7 @@ export const NavBarContainer = styled.nav`
   @media only screen and (max-width: 1200px) {
     & {
       width: 100vw;
-      height: 3rem;
+      height: 48px;
     }
 
     ul {
@@ -149,18 +149,6 @@ export const NavBarContainer = styled.nav`
 
     ul li:last-child button {
         margin: 0;
-    }
-  }
-
-  @media only screen and (max-width: 1200px) {
-    & {
-      width: 100vw;
-      height: 3rem;
-    }
-
-    ul {
-      display: grid;
-      grid-template-columns: 1fr 3fr 1fr;
     }
   }
 `;

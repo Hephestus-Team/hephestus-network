@@ -4,6 +4,8 @@ export const EditProfileContainer = styled.aside`
   display: flex;
   flex-direction: column;
 
+  margin: 0 auto;
+
   width: 260px;
 
   div {
@@ -28,19 +30,19 @@ export const EditProfileContainer = styled.aside`
   div strong {
     margin-top: 15px;
 
-    font-size: 1.4rem;
+    font-size: 2.4rem;
   }
 
   div p {
     margin-top: 5px;
-    font-size: 0.9rem;
+    font-size: 1.4rem;
   }
 
   div div svg {
     margin-top: 6px;
 
-    width: 1.3rem;
-    height: 1.3rem;
+    width: 20px;
+    height: 20px;
   }
 
   div div {
@@ -59,7 +61,7 @@ export const EditProfileContainer = styled.aside`
     background: #05ade0;
     padding: 8px 8px;
 
-    font-size: 16px;
+    font-size: 1.6rem;
     color: #fff;
 
     cursor: pointer;
@@ -84,7 +86,7 @@ export const EditProfileContainer = styled.aside`
     padding: 5px;
     width: 100%;
     height: 30px;
-    font-size: 0.9rem;
+    font-size: 1.4rem;
     color: #777;
     border: 0;
     border-radius: 3px;
@@ -106,7 +108,7 @@ export const EditProfileContainer = styled.aside`
     padding: 5px;
     width: 100%;
     height: 30px;
-    font-size: 0.9rem;
+    font-size: 1.4rem;
     color: #777;
     border: 0;
     border-radius: 3px;
@@ -120,7 +122,7 @@ export const EditProfileContainer = styled.aside`
     padding: 5px;
     width: 100%;
     height: 30px;
-    font-size: 0.9rem;
+    font-size: 1.4rem;
     color: #777;
     border: 0;
     border-radius: 3px;
@@ -153,7 +155,7 @@ export const EditProfileContainer = styled.aside`
     background: #fff;
     padding: 6px 12px;
 
-    font-size: 12px;
+    font-size: 1.2rem;
     color: #05ade0;
 
     cursor: pointer;
@@ -167,7 +169,7 @@ export const EditProfileContainer = styled.aside`
     background: #05ade0;
     padding: 6px 12px;
 
-    font-size: 12px;
+    font-size: 1.2rem;
     color: #fff;
 
     cursor: pointer;
@@ -175,6 +177,6 @@ export const EditProfileContainer = styled.aside`
 
   .username p {
     color: #888888;
-    font-size: 16px;
+    font-size: 1.6rem;
   }
 `;

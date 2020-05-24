@@ -17,7 +17,8 @@ import { FaEllipsisV } from 'react-icons/fa';
 import AutoSizeTextarea from '../AutoSizeTextarea';
 
 import {
-  PostContainer, ShareModal, DeleteModal,
+  PostContainer, CommentContainer, ReplyContainer, ShareModal, DeleteModal,
+  ButtonSettings, DropSettings,
 } from './styles';
 
 const Post = ({
@@ -39,22 +40,20 @@ const Post = ({
   const [editText, setEditText] = useState('');
 
   return (
-    <PostContainer className="post">
+    <PostContainer>
+      <article>
 
-      <div className="mainContainer">
-        <button
-          type="button"
-          className="buttonSettings"
+        <ButtonSettings
           onClick={() => setShowSettings({
             isShowed: showSettings.uniqid !== post.uniqid ? true : !showSettings.isShowed,
             uniqid: post.uniqid,
           })}
         >
           <FaEllipsisV />
-        </button>
+        </ButtonSettings>
 
         { (showSettings.isShowed && showSettings.uniqid === post.uniqid) && (
-        <div className="dropSettings">
+        <DropSettings>
           <button type="button" onClick={() => { setOpenEdit({ isOpened: true, uniqid: post.uniqid }); setEditText(post.content); setShowSettings({ isShowed: false, uniqid: '' }); }}>
             <FiEdit2 />
             <p> Edit </p>
@@ -63,21 +62,34 @@ const Post = ({
             <FiTrash2 />
             <p> Delete </p>
           </button>
-        </div>
+        </DropSettings>
         )}
 
         { post.is_share && (
-        <div className="shareData">
+        <header className="shareData">
           <strong className="author">{`${post.name}`}</strong>
-          <p className="content">{post.content}</p>
-        </div>
+          { (openEdit.isOpened && openEdit.uniqid === post.uniqid) ? (
+            <div className="editContainer">
+              <AutoSizeTextarea
+                value={editText}
+                onChange={(e) => { setEditText(e.target.value); }}
+              />
+              <div>
+                <div>
+                  <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
+                  <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleEditPost(post, editText); }}> Save </button>
+                </div>
+              </div>
+            </div>
+          ) : <p className="content">{post.content}</p> }
+        </header>
         )}
 
-        <div className={post.original ? 'authorAndContent original' : 'authorAndContent'}>
+        <section className={post.original ? 'original' : ''}>
           <strong className="author">{post.original ? `${post.original.name}` : `${post.name}`}</strong>
 
-          { (openEdit.isOpened && openEdit.uniqid === post.uniqid) ? (
-            <div className="editContentContainer">
+          { (openEdit.isOpened && openEdit.uniqid === post.uniqid && !post.is_share) ? (
+            <div className="editContainer">
               <AutoSizeTextarea
                 value={editText}
                 onChange={(e) => { setEditText(e.target.value); }}
@@ -90,20 +102,9 @@ const Post = ({
               </div>
             </div>
           ) : <p className="content">{post.original ? `${post.original.content}` : `${post.content}`}</p> }
-        </div>
+        </section>
 
-        <div className="likeAndShare">
-          <button
-            type="button"
-            className="shareButton"
-            onClick={() => { setOpenShare(true); }}
-          >
-            <FiShare2 />
-            <a>
-              Share
-            </a>
-          </button>
-
+        <footer className="likeAndShare">
           <button
             type="button"
             className="likeButton"
@@ -118,14 +119,26 @@ const Post = ({
               { post.likes ? post.likes.length : '' }
             </p>
           </button>
-        </div>
-      </div>
+
+          <button
+            type="button"
+            className="shareButton"
+            onClick={() => { setOpenShare(true); }}
+          >
+            <FiShare2 />
+            <a>
+              Share
+            </a>
+          </button>
+        </footer>
+
+      </article>
 
       <div className="comments">
 
         { post.comments.map((comment) => (
 
-          <div className="comment" key={comment.uniqid}>
+          <CommentContainer key={comment.uniqid}>
 
             { (openDelete && comment.uniqid === showSettings.uniqid)
                 && (
@@ -145,37 +158,19 @@ const Post = ({
                   </DeleteModal>
                 ) }
 
-            <div className="mainContainer">
-              <strong className="author">{comment.name}</strong>
+            <article>
 
-              { (openEdit.isOpened && openEdit.uniqid === comment.uniqid) ? (
-                <div className="editContentContainer commentEdit">
-                  <AutoSizeTextarea
-                    value={editText}
-                    onChange={(e) => { setEditText(e.target.value); }}
-                  />
-                  <div>
-                    <div>
-                      <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
-                      <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleEditComment(editText, post, comment); }}> Save </button>
-                    </div>
-                  </div>
-                </div>
-              ) : <p className="content">{comment.original ? `${comment.original.content}` : `${comment.content}`}</p> }
-
-              <button
-                type="button"
-                className="buttonSettings"
+              <ButtonSettings
                 onClick={() => setShowSettings({
                   isShowed: showSettings.uniqid !== comment.uniqid ? true : !showSettings.isShowed,
                   uniqid: comment.uniqid,
                 })}
               >
                 <FaEllipsisV />
-              </button>
+              </ButtonSettings>
 
               { (showSettings.isShowed && showSettings.uniqid === comment.uniqid) && (
-              <div className="dropSettings">
+              <DropSettings>
                 <button
                   type="button"
                   onClick={() => {
@@ -197,10 +192,27 @@ const Post = ({
                   <FiTrash2 />
                   <p> Delete </p>
                 </button>
-              </div>
+              </DropSettings>
               )}
 
-              <div className="likeAndResponse">
+              <strong className="author">{comment.name}</strong>
+
+              { (openEdit.isOpened && openEdit.uniqid === comment.uniqid) ? (
+                <div className="editContainer">
+                  <AutoSizeTextarea
+                    value={editText}
+                    onChange={(e) => { setEditText(e.target.value); }}
+                  />
+                  <div>
+                    <div>
+                      <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
+                      <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleEditComment(editText, post, comment); }}> Save </button>
+                    </div>
+                  </div>
+                </div>
+              ) : <p className="content">{comment.original ? `${comment.original.content}` : `${comment.content}`}</p> }
+
+              <footer className="likeAndReply">
                 <button
                   type="button"
                   className="likeButton"
@@ -210,18 +222,19 @@ const Post = ({
                 >
                   { comment.likes.some((like) => like.user === uniqid)
                     ? <IoMdThumbsUp /> : <FiThumbsUp />}
-                  <p className="likeNumber">
+                  <p>
                     { comment.likes ? comment.likes.length : '' }
                   </p>
                 </button>
                 <button type="button" className="replyButton" onClick={() => { handleCommentting(post, { commenting: true }, comment); }}>
                   REPLY
                 </button>
-              </div>
-            </div>
+              </footer>
+
+            </article>
 
             { comment.commenting && (
-              <div className="commentBarResponse">
+              <aside className="replyBar">
                 <input type="text" placeholder="Add a Comment" value={comment.commentBar} onChange={(e) => handleCommentting(post, { commentBar: e.target.value }, comment)} />
                 <div>
                   <div>
@@ -229,7 +242,7 @@ const Post = ({
                     <button type="button" onClick={() => { handleCommentting(post, { commenting: false, commentBar: '' }, comment, true); }}> Comment </button>
                   </div>
                 </div>
-              </div>
+              </aside>
             )}
 
             { comment.replies.length !== 0 && (!comment.showReplies ? (
@@ -261,7 +274,7 @@ const Post = ({
             ))}
 
             { comment.showReplies && comment.replies.map((commentReply) => (
-              <div className="mainContainer repliedComment" key={commentReply.uniqid}>
+              <ReplyContainer key={commentReply.uniqid}>
 
                 { (openDelete && commentReply.uniqid === showSettings.uniqid)
                 && (
@@ -281,26 +294,11 @@ const Post = ({
                   </DeleteModal>
                 ) }
 
-                <strong className="author">{commentReply.name}</strong>
+                {/* ---------------------------------------- */}
 
-                { (openEdit.isOpened && openEdit.uniqid === commentReply.uniqid) ? (
-                  <div className="editContentContainer commentEdit">
-                    <AutoSizeTextarea
-                      value={editText}
-                      onChange={(e) => { setEditText(e.target.value); }}
-                    />
-                    <div>
-                      <div>
-                        <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
-                        <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleEditComment(editText, post, comment, commentReply); }}> Save </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : <p className="content">{commentReply.original ? `${commentReply.original.content}` : `${commentReply.content}`}</p> }
+                {/* Reply's settings dropdown */}
 
-                <button
-                  type="button"
-                  className="buttonSettings"
+                <ButtonSettings
                   onClick={() => setShowSettings({
                     isShowed: showSettings.uniqid !== commentReply.uniqid
                       ? true
@@ -309,10 +307,10 @@ const Post = ({
                   })}
                 >
                   <FaEllipsisV />
-                </button>
+                </ButtonSettings>
 
                 { (showSettings.isShowed && showSettings.uniqid === commentReply.uniqid) && (
-                <div className="dropSettings">
+                <DropSettings>
                   <button type="button" onClick={() => { setOpenEdit({ isOpened: true, uniqid: commentReply.uniqid }); setEditText(commentReply.content); setShowSettings({ isShowed: false, uniqid: '' }); }}>
                     <FiEdit2 />
                     <p> Edit </p>
@@ -327,10 +325,33 @@ const Post = ({
                     <FiTrash2 />
                     <p> Delete </p>
                   </button>
-                </div>
+                </DropSettings>
                 )}
 
-                <div className="likeAndResponse">
+                {/* ---------------------------------------- */}
+
+                {/* Reply's main data */}
+
+                <strong className="author">{commentReply.name}</strong>
+
+                { (openEdit.isOpened && openEdit.uniqid === commentReply.uniqid) ? (
+                  <div className="editContainer">
+                    <AutoSizeTextarea
+                      value={editText}
+                      onChange={(e) => { setEditText(e.target.value); }}
+                    />
+                    <div>
+                      <div>
+                        <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
+                        <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleEditComment(editText, post, comment, commentReply); }}> Save </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : <p className="content">{commentReply.original ? `${commentReply.original.content}` : `${commentReply.content}`}</p> }
+
+                {/* ---------------------------------------- */}
+
+                <footer className="likeContainer">
                   <button
                     type="button"
                     className="likeButton"
@@ -340,18 +361,18 @@ const Post = ({
                   >
                     { commentReply.likes.some((like) => like.user === uniqid)
                       ? <IoMdThumbsUp /> : <FiThumbsUp />}
-                    <p className="likeNumber">
+                    <p>
                       { commentReply.likes ? commentReply.likes.length : '' }
                     </p>
                   </button>
-                </div>
-              </div>
+                </footer>
+              </ReplyContainer>
             ))}
-          </div>
+          </CommentContainer>
         ))}
       </div>
 
-      <div className="commentBar">
+      <aside className="commentBar">
         <input
           type="text"
           placeholder="Add a Comment"
@@ -367,42 +388,47 @@ const Post = ({
             </div>
           ) }
         </div>
-      </div>
+      </aside>
 
-      <ShareModal open={openShare}>
-        <div className="modalContent">
-          <button type="button" className="closeButton" onClick={() => { setOpenShare(false); }}>
-            <IoMdClose />
-          </button>
+      { openShare && (
+        <ShareModal>
+          <div className="modalContent">
+            <button type="button" className="closeButton" onClick={() => { setOpenShare(false); }}>
+              <IoMdClose />
+            </button>
 
-          <div className="header">
-            <h2>
-              Write a Publish
-            </h2>
-          </div>
+            <div className="header">
+              <h2>
+                Write a Publish
+              </h2>
+            </div>
 
-          <div className="shareAuthor">
-            <strong className="author">{name}</strong>
-          </div>
-          <div className="textareaContainer">
-            <AutoSizeTextarea
-              placeholder="Say something about this..."
-              value={shareText}
-              onChange={(e) => { setShareText(e.target.value); }}
-            />
-          </div>
-          <div className="sharedPost">
-            <strong className="author">{post.original ? `${post.original.name}` : `${post.name}`}</strong>
-            <p className="content">{post.original ? `${post.original.content}` : `${post.content}`}</p>
-          </div>
-          <div className="shareButtons">
-            <button type="button" onClick={() => { setOpenShare(false); handleShare(post, shareText); setShareText(''); }}> Publish </button>
-          </div>
-        </div>
-      </ShareModal>
+            <div className="shareAuthor">
+              <strong className="author">{name}</strong>
+            </div>
 
-      { (openDelete && post.uniqid === showSettings.uniqid)
-        && (
+            <div className="textareaContainer">
+              <AutoSizeTextarea
+                placeholder="Say something about this..."
+                value={shareText}
+                onChange={(e) => { setShareText(e.target.value); }}
+              />
+            </div>
+
+            <div className="sharedPost">
+              <strong className="author">{post.original ? `${post.original.name}` : `${post.name}`}</strong>
+              <p className="content">{post.original ? `${post.original.content}` : `${post.content}`}</p>
+            </div>
+
+            <div className="publishButtonContainer">
+              <button type="button" onClick={() => { setOpenShare(false); handleShare(post, shareText); setShareText(''); }}> Publish </button>
+            </div>
+
+          </div>
+        </ShareModal>
+      )}
+
+      { (openDelete && post.uniqid === showSettings.uniqid) && (
         <DeleteModal>
           <div className="modalContent">
             <h2>Delete Post?</h2>
@@ -417,7 +443,7 @@ const Post = ({
             </div>
           </div>
         </DeleteModal>
-        ) }
+      ) }
 
     </PostContainer>
   );

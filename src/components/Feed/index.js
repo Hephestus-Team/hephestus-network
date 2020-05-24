@@ -14,7 +14,7 @@ import api from '../../services/api';
 import Post from '../Post';
 
 
-import { FeedStyle } from './styles';
+import { FeedContainer } from './styles';
 import AutoSizeTextarea from '../AutoSizeTextarea';
 
 const Feed = ({ setPosts, posts }) => {
@@ -560,8 +560,8 @@ const Feed = ({ setPosts, posts }) => {
   };
 
   return (
-    <FeedStyle>
-      <div className="publish">
+    <FeedContainer>
+      <header className="publish">
         <h1> Create a publish </h1>
         <AutoSizeTextarea
           placeholder="What's happening ?"
@@ -574,7 +574,7 @@ const Feed = ({ setPosts, posts }) => {
         >
           Publish
         </button>
-      </div>
+      </header>
       { posts.length !== 0 && posts.map((post) => (
         <Post
           post={post}
@@ -606,7 +606,7 @@ const Feed = ({ setPosts, posts }) => {
             <IoMdClose onClick={() => { setOpenSnack(false); }} />
           </div>
         ))}
-    </FeedStyle>
+    </FeedContainer>
   );
 };
 

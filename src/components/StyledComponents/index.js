@@ -37,7 +37,7 @@ export const FriendList = styled.div`
     text-align: center;
 
     width: 100%;
-    padding: 1rem;
+    padding: 16px;
 
     display: block;
 
@@ -48,12 +48,12 @@ export const FriendList = styled.div`
 
   @media only screen and (max-width: 1200px) {
     & {
-        top: 3rem;
+        top: 48px;
         width: 20vw;
     }
 
     ul li {
-        top: 3rem;
+        top: 48px;
         font-size: 15px;
     }
   }

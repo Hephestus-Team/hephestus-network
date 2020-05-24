@@ -1,4 +1,5 @@
 import styled, { keyframes } from 'styled-components';
+import { PostContainer } from '../Post/styles';
 
 const snackBarAnimation = keyframes`
   0% {
@@ -10,8 +11,12 @@ const snackBarAnimation = keyframes`
   }
 `;
 
-export const FeedStyle = styled.div`
+export const FeedContainer = styled.main`
   width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 
   .snackBar {
     position: fixed;
@@ -39,7 +44,7 @@ export const FeedStyle = styled.div`
 
   .snackBar p {
     color: #fff;
-    font-size: 14px;
+    font-size: 1.4rem;
 
     margin: 0 10px;
   }
@@ -49,17 +54,19 @@ export const FeedStyle = styled.div`
   }
 
   .snackBar svg:last-child {
-    font-size: 25px;
+    font-size: 2.5rem;
     cursor: pointer;
   }
 
-  .post:first-child {
+  ${PostContainer}:first-child {
     margin-top: 0;
   }
 
-  .publish {
+  header.publish {
     background-color: #FFF;
     padding: 15px;
+
+    width: 100%;
 
     display: flex;
     flex-direction: column;
@@ -67,16 +74,16 @@ export const FeedStyle = styled.div`
     box-shadow: 5px 5px 7px #888888;
   }
 
-  .publish h1 {
-    font-size: 24px;
+  header.publish h1 {
+    font-size: 2.4rem;
     margin-bottom: 15px;
   }
 
-  .publish textarea {
+  header.publish textarea {
     width: 98%;
     margin-bottom: 15px;
 
-    font-size: 18px;
+    font-size: 1.8rem;
     font-family: Roboto, Arial, sans-serif;
     color: #000;
 
@@ -87,12 +94,12 @@ export const FeedStyle = styled.div`
     align-self: center;
   }
 
-  .publish button {
+  header.publish button {
     border: 0;
     border-radius: 2px;
     background: #05ade0;
     padding: 6px 18px;
-    font-size: 15px;
+    font-size: 1.5rem;
     color: #fff;
     cursor: pointer;
 

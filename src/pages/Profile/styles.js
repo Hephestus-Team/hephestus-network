@@ -9,10 +9,6 @@ export const PageContainer = styled.div`
   gap: 50px;
 
   main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
     max-width: 40vw;
   }
 

@@ -91,12 +91,10 @@ const Profile = () => {
         handleNewSendMessage={(message) => handleNewSendMessage(message)}
       />
       <EditProfile accountInfo={accountInfo} setAccountInfo={setAccountInfo} />
-      <main>
-        <Feed
-          posts={posts}
-          setPosts={setPosts}
-        />
-      </main>
+      <Feed
+        posts={posts}
+        setPosts={setPosts}
+      />
     </PageContainer>
   );
 };

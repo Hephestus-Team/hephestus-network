@@ -13,154 +13,69 @@ const postdropAnimation = keyframes`
   }
 `;
 
-export const PostContainer = styled.div`
-  background-color: #FFF;
-  padding: 15px;
+export const ButtonSettings = styled.button`
+  width: 35px;
+  height: 35px;
+  opacity: 0;
 
-  margin-top: 25px;
+  color: #909090;
+
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  padding: 5px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: none;
+  border: 0;
+
+  &:hover {
+    cursor: pointer;
+    background-color: #E5E6F0;
+    border-radius: 50%;
+  }
+
+  &:focus {
+    opacity: 0.8;
+    cursor: pointer;
+    background-color: #E5E6F0;
+    border-radius: 50%;
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+export const DropSettings = styled.div`
+  position: absolute;
+  z-index: 1;
+  right: 0px;
+  top: 38px;
+
+  width: auto;
+  height: 0;
+  opacity: 0;
 
   display: flex;
   flex-direction: column;
 
-  box-shadow: 5px 5px 7px #888888;
+  background: #E3E4E7;
 
-  position: relative;
+  border-radius: 8%;
+  box-shadow: rgba(5, 173, 224, 0.2) 0px 0px 15px, rgba(5, 173, 224, 0.2) 0px 0px 3px 1px;
 
-  .commentEdit textarea {
-    font-size: 14px;
-  }
+  text-align: right;
+  padding: 8px 0;
 
-  textarea {
-    width: 98%;
+  animation: ${postdropAnimation} 0.2s ease-out 0s forwards;
 
-    margin-left: -14px;
-
-    font-size: 20px;
-    font-family: Roboto, Arial, sans-serif;
-    color: #000;
-
-    resize: none;
-    overflow: hidden;
-    border: 0;
-    border-bottom: 2px solid #eef;
-
-    align-self: center;
-  }
-
-  .editContentContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    margin-top: 6px;
-  }
-
-  .editContentContainer div {
-    margin-top: 10px;
-
-    align-self: flex-end;
-  }
-
-  .editContentContainer div div button:last-child {
-    border: 0;
-    border-radius: 2px;
-    background: #05ade0;
-    padding: 6px 14px;
-
-    font-size: 14px;
-    color: #fff;
-
-    cursor: pointer;
-
-    margin-left: auto;
-  }
-
-  .editContentContainer div div button:first-child {
-    margin-right: 10px;
-
-    border: 0;
-    border-radius: 2px;
-    color: #05ade0;
-    padding: 6px 8px;
-
-    font-size: 14px;
-    background-color: #fff;
-
-    cursor: pointer;
-  }
-
-  .mainContainer {
-    position: relative;
-  }
-
-  .mainContainer:hover .buttonSettings {
-    opacity: 0.8;
-  }
-
-  .buttonSettings {
-    width: 35px;
-    height: 35px;
-    opacity: 0;
-
-    color: #909090;
-
-    position: absolute;
-    top: 0;
-    right: 0;
-
-    padding: 5px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    background: none;
-    border: 0;
-  }
-
-  .comments .comment .mainContainer .buttonSettings:hover, .buttonSettings:hover {
-    cursor: pointer;
-    background-color: #E5E6F0;
-    border-radius: 50%;
-  }
-
-  .comments .comment .mainContainer .buttonSettings:focus, .buttonSettings:focus {
-    opacity: 0.8;
-    cursor: pointer;
-    background-color: #E5E6F0;
-    border-radius: 50%;
-  }
-
-  .buttonSettings svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .dropSettings {
-    position: absolute;
-    z-index: 1;
-    right: 0px;
-    top: 38px;
-
-    width: auto;
-    height: 0;
-    opacity: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    background: #E3E4E7;
-
-    border-radius: 8%;
-    box-shadow: rgba(5, 173, 224, 0.2) 0px 0px 15px, rgba(5, 173, 224, 0.2) 0px 0px 3px 1px;
-
-    text-align: right;
-    padding: 8px 0;
-
-    animation: ${postdropAnimation} 0.2s ease-out 0s forwards;
-  }
-
-  .dropSettings button {
+  button {
     background: none;
     border: 0;
 
@@ -178,26 +93,66 @@ export const PostContainer = styled.div`
     cursor: pointer;
   }
 
-  .dropSettings button:last-child {
+  button:last-child {
     color: #E0245E;
   }
 
-  .dropSettings button:hover, .comments .comment .mainContainer .dropSettings button:hover {
+  button:hover {
     background: #ECECEE;
   }
 
-  .dropSettings button p {
-    font-size: 16px;
+  button p {
+    font-size: 1.6rem;
   }
 
-  .dropSettings button svg {
+  button svg {
     margin-right: 16px;
 
     width: 20px;
     height: 20px;
   }
+`;
 
-  .authorAndContent.original {
+export const PostContainer = styled.section`
+  background-color: #FFF;
+  padding: 15px;
+
+  width: 100%;
+
+  margin-top: 25px;
+
+  display: flex;
+  flex-direction: column;
+
+  box-shadow: 5px 5px 7px #888888;
+
+  position: relative;
+
+  article:hover ${ButtonSettings} {
+    opacity: 0.8;
+  }
+
+  article {
+    position: relative;
+  }
+
+  header.shareData {
+    margin-bottom: 20px;
+  }
+
+  strong.author {
+    margin-bottom: 8px;
+
+    font-size: 1.4rem;
+  }
+
+  p.content {
+    font-size: 2rem;
+
+    margin: 6px 40px 14px 0;
+  }
+
+  section.original {
     padding: 15px;
 
     margin-bottom: 15px;
@@ -206,213 +161,96 @@ export const PostContainer = styled.div`
     border: 2px solid #eef;
   }
 
-  .author {
-    margin-bottom: 8px;
-
-    font-size: 14px;
-  }
-
-  .content {
-    font-size: 20px;
-
-    margin: 6px 0;
-    margin-right: 40px;
-    text-align: justify;
-  }
-
-  .likeAndShare {
+  div.editContainer {
     display: flex;
-    flex-direction: row-reverse;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: center;
+
+    margin-top: 6px;
+  }
+
+  div.editContainer div {
+    margin-top: 10px;
+
+    align-self: flex-end;
+  }
+
+  div.editContainer div div button:last-child {
+    border: 0;
+    border-radius: 2px;
+    background: #05ade0;
+    padding: 6px 14px;
+
+    font-size: 1.4rem;
+    color: #fff;
+
+    cursor: pointer;
+
+    margin-left: auto;
+  }
+
+  div.editContainer div div button:first-child {
+    margin-right: 10px;
+
+    border: 0;
+    border-radius: 2px;
+    color: #05ade0;
+    padding: 6px 8px;
+
+    font-size: 1.4rem;
+    background-color: #fff;
+
+    cursor: pointer;
+  }
+
+  div.editContainer textarea {
+    width: 98%;
+
+    font-size: 2rem;
+    font-family: Roboto, Arial, sans-serif;
+    color: #000;
+
+    padding-right: 30px;
+
+    resize: none;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 2px solid #eef;
+
+    align-self: flex-start;
+  }
+
+  footer.likeAndShare {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
 
     margin-bottom: 20px;
   }
 
-  .likeAndShare button {
-    margin-top: 10px;
+  footer.likeAndShare button svg {
+    margin-right: 10px;
+  }
 
+  footer.likeAndShare button.shareButton {
     border: 0;
-    outline: 0;
     background: none;
 
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
 
-    font-size: 16px;
+    font-size: 1.6rem;
 
     cursor: pointer;
 
     color: #909090;
   }
 
-  .likeAndShare button svg {
-    margin-right: 10px;
-  }
-
-  .comments {
-    padding: 0 5px;
-  }
-
-  .comments .comment:first-child {
-    margin-top: 0;
-  }
-
-  .comment {
-    margin-bottom: 16px;
-  }
-
-  .comment .mainContainer .author {
-    font-size: 13px;
-
-    padding: 2.5px 0;
-  }
-
-  .comment .mainContainer .content {
-    font-size: 14px;
-
-    padding: 1.5px 0;
-
-    margin-top: 2px;
-    margin-bottom: 4px;
-  }
-
-  .comment .mainContainer button a {
-    text-decoration: none;
-    color: #05ade0;
-    font-size: 12px;
-  }
-
-  .comment .mainContainer button {
-    background: none;
-    border: 0;
-    outline: 0;
-
-    cursor: pointer;
-  }
-
-  .comment .mainContainer .likeAndResponse {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-
-    padding: 8px 0;
-  }
-
-  .likeAndResponse .replyButton {
-    color: #909090;
-    font-size: 13px;
-  }
-
-  .commentBar {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .commentBar input {
-    width: 98%;
-    height: 34px;
-
-    font-size: 16px;
-    color: #000;
-
-    border: 0;
-    border-bottom: 3px solid #eef;
-  }
-
-  .commentBar div {
-    margin-top: 10px;
-
-    align-self: flex-end;
-  }
-
-  .commentBar div div button:last-child {
-    border: 0;
-    border-radius: 2px;
-    background: #05ade0;
-    padding: 6px 8px;
-
-    font-size: 14px;
-    color: #fff;
-
-    cursor: pointer;
-
-    margin-left: auto;
-  }
-
-  .commentBar div div button:first-child {
-    margin-right: 10px;
-
-    border: 0;
-    border-radius: 2px;
-    color: #05ade0;
-    padding: 6px 8px;
-
-    font-size: 14px;
-    background-color: #fff;
-
-    cursor: pointer;
-  }
-
-  .commentBarResponse {
-    margin-top: 5px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .commentBarResponse div {
-    margin-top: 5px;
-
-    align-self: flex-end;
-  }
-
-  .commentBarResponse div div button:first-child {
-    margin-right: 10px;
-
-    border: 0;
-    border-radius: 2px;
-    color: #05ade0;
-    padding: 6px 8px;
-
-    font-size: 12px;
-    background-color: #fff;
-
-    cursor: pointer;
-  }
-
-  .commentBarResponse div div button:last-child {
-    border: 0;
-    border-radius: 2px;
-    background: #05ade0;
-    padding: 6px 8px;
-
-    font-size: 12px;
-    color: #fff;
-
-    cursor: pointer;
-
-    margin-left: auto;
-  }
-
-  .commentBarResponse input {
-    width: 98%;
-    height: 34px;
-
-    font-size: 14px;
-    color: #000;
-
-    border: 0;
-    border-bottom: 2px solid #eef;
-  }
-
-  .likeButton {
+  footer.likeAndShare button.likeButton {
     margin-right: 24px;
 
     border: 0;
-    outline: 0;
     background: none;
 
     display: flex;
@@ -420,7 +258,6 @@ export const PostContainer = styled.div`
     align-items: center;
     justify-content: flex-end;
 
-    font-size: 16px;
     font-weight: bold;
 
     cursor: pointer;
@@ -428,26 +265,245 @@ export const PostContainer = styled.div`
     color: #909090;
   }
 
-  .likeButton .likeNumber {
-    font-size: 13px;
+  footer.likeAndShare button.likeButton p {
+    font-size: 1.3rem;
   }
 
-  .likeButton svg {
-    padding: 8;
+  footer.likeAndShare button.likeButton svg {
+    font-size: 2rem;
+    font-weight: bold;
+  }
+
+  aside.commentBar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  aside.commentBar input {
+    width: 98%;
+    height: 34px;
+
+    font-size: 1.6rem;
+    color: #000;
+
+    border: 0;
+    border-bottom: 3px solid #eef;
+  }
+
+  aside.commentBar div {
+    margin-top: 10px;
+
+    align-self: flex-end;
+  }
+
+  aside.commentBar div div button:last-child {
+    border: 0;
+    border-radius: 2px;
+    background: #05ade0;
+    padding: 6px 8px;
+
+    font-size: 1.4rem;
+    color: #fff;
+
+    cursor: pointer;
+
+    margin-left: auto;
+  }
+
+  aside.commentBar div div button:first-child {
+    margin-right: 10px;
+
+    border: 0;
+    border-radius: 2px;
+    color: #05ade0;
+    padding: 6px 8px;
+
+    font-size: 1.4rem;
+    background-color: #fff;
+
+    cursor: pointer;
+  }
+
+  div.comments {
+    padding: 0 5px;
+  }
+`;
+
+export const CommentContainer = styled.section`
+  margin-bottom: 16px;
+
+  article:hover ${ButtonSettings} {
+    opacity: 0.8;
+  }
+
+  article {
+    position: relative;
+  }
+
+  strong.author {
+    font-size: 1.3rem;
+    padding: 2.5px 0;
+    margin-bottom: 8px;
+  }
+
+  p.content {
+    font-size: 1.4rem;
+    padding: 1.5px 0;
+    margin: 2px 40px 4px 0;
+  }
+
+  div.editContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 6px;
+  }
+
+  div.editContainer textarea {
+    font-size: 1.4rem;
+    width: 98%;
+    font-family: Roboto,Arial,sans-serif;
+    color: #000;
+    padding-right: 30px;
+    resize: none;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 2px solid #eef;
+    align-self: flex-start;
+  }
+
+  div.editContainer div {
+    margin-top: 10px;
+    flex-direction: row;
+    align-self: flex-end;
+  }
+
+  div.editContainer div div button:first-child {
+    margin-right: 10px;
+    border: 0;
+    border-radius: 2px;
+    color: #05ade0;
+    padding: 6px 8px;
+    font-size: 1.4rem;
+    background-color: #fff;
+    cursor: pointer;
+  }
+
+  div.editContainer div div button:last-child {
+    border: 0;
+    border-radius: 2px;
+    background: #05ade0;
+    padding: 6px 14px;
+    font-size: 1.4rem;
+    color: #fff;
+    cursor: pointer;
+    margin-left: auto;
+  }
+
+  footer.likeAndReply {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
+    padding: 8px 0;
+  }
+
+  footer.likeAndReply button.replyButton {
+    color: #909090;
+    font-size: 1.3rem;
+
+    background: none;
+    border: 0;
+
+    cursor: pointer;
+  }
+
+  footer.likeAndReply button.likeButton {
+    margin-right: 24px;
+
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+
+    background: none;
+    border: 0;
+
+    font-weight: bold;
+    color: #909090;
+
+    cursor: pointer;
+  }
+
+  footer.likeAndReply button.likeButton svg {
+    font-size: 1.6rem;
     margin-right: 10px;
   }
 
-  .repliedComment {
-    margin-top: 5px;
-    margin-left: 20px;
+  footer.likeAndReply button.likeButton p {
+    font-size: 1.3rem;
   }
 
-  .viewReplies {
+  aside.replyBar {
+    margin-top: 5px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  aside.replyBar div {
+    margin-top: 5px;
+
+    align-self: flex-end;
+  }
+
+  aside.replyBar div div button:first-child {
+    margin-right: 10px;
+
+    border: 0;
+    border-radius: 2px;
+    color: #05ade0;
+    padding: 6px 8px;
+
+    font-size: 1.2rem;
+    background-color: #fff;
+
+    cursor: pointer;
+  }
+
+  aside.replyBar div div button:last-child {
+    border: 0;
+    border-radius: 2px;
+    background: #05ade0;
+    padding: 6px 8px;
+
+    font-size: 1.2rem;
+    color: #fff;
+
+    cursor: pointer;
+
+    margin-left: auto;
+  }
+
+  aside.replyBar input {
+    width: 98%;
+    height: 34px;
+
+    font-size: 1.4rem;
+    color: #000;
+
+    border: 0;
+    border-bottom: 2px solid #eef;
+  }
+
+  button.viewReplies {
     display: flex;
     align-items: center;
 
     color: #2979FF;
-    font-size: 14px;
+    font-size: 1.4rem;
 
     cursor: pointer;
 
@@ -456,17 +512,94 @@ export const PostContainer = styled.div`
     padding: 7.5px 0;
   }
 
-  .viewReplies svg {
+  button.viewReplies svg {
     margin-right: 8px;
   }
+`;
 
-  .shareData {
-    margin-bottom: 20px;
+export const ReplyContainer = styled.div`
+  margin-top: 5px;
+  margin-left: 20px;
+
+  position: relative;
+
+  &:hover ${ButtonSettings} {
+    opacity: 0.8;
+  }
+
+  strong.author {
+    font-size: 1.3rem;
+    padding: 2.5px 0;
+    margin-bottom: 8px;
+  }
+
+  p.content {
+    font-size: 1.4rem;
+    padding: 1.5px 0;
+    margin: 2px 40px 4px 0;
+  }
+
+  footer.likeContainer {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 8px 0;
+  }
+
+  footer.likeContainer button.likeButton {
+    margin-right: 24px;
+
+    display: flex;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    font-weight: bold;
+    color: #909090;
+
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+
+  footer.likeContainer button.likeButton svg {
+    font-size: 1.6rem;
+    margin-right: 10px;
+  }
+
+  footer.likeContainer button.likeButton p {
+    font-size: 1.3rem;
+  }
+
+  div.editContainer {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    margin-top: 6px;
+  }
+
+  div.editContainer textarea {
+    font-size: 1.4rem;
+    width: 98%;
+
+    font-family: Roboto,Arial,sans-serif;
+    color: #000;
+    padding-right: 30px;
+    resize: none;
+    overflow: hidden;
+    border: 0;
+    border-bottom: 2px solid #eef;
+    align-self: flex-start;
   }
 `;
 
 export const ShareModal = styled.div`
-  display: ${(props) => (props.open ? 'block' : 'none')};
+  display: block;
   position: fixed;
   z-index: 1;
   padding-top: 100px;
@@ -492,7 +625,7 @@ export const ShareModal = styled.div`
     }
   }
 
-  .modalContent {
+  div.modalContent {
     margin: auto;
     padding: 15px;
     width: 30%;
@@ -509,7 +642,7 @@ export const ShareModal = styled.div`
     max-width: 850px;
   }
 
-  .modalContent .closeButton {
+  div.modalContent button.closeButton {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -529,20 +662,22 @@ export const ShareModal = styled.div`
     border: 0;
   }
 
-  .modalContent .closeButton:hover {
+  div.modalContent button.closeButton:hover {
     cursor: pointer;
     background-color: #E5E6F0;
     border-radius: 50%;
   }
 
-  .modalContent .closeButton svg {
+  div.modalContent button.closeButton svg {
     width: 80%;
     height: 80%;
   }
 
-  .modalContent .header {
+  div.modalContent div.header {
     display: flex;
     justify-content: center;
+
+    font-size: 1.6rem;
 
     padding-top: 5px;
     padding-bottom: 10px;
@@ -550,16 +685,16 @@ export const ShareModal = styled.div`
     margin-bottom: 10px;
   }
 
-  .modalContent .textareaContainer {
+  div.modalContent div.textareaContainer {
     margin: 6px 0;
   }
 
-  .modalContent .textareaContainer textarea {
+  div.modalContent div.textareaContainer textarea {
     height: auto;
     width: 100%;
     margin: 0 auto;
 
-    font-size: 18px;
+    font-size: 1.8rem;
     font-family: Roboto,sans-serif;
     color: #000;
 
@@ -569,20 +704,21 @@ export const ShareModal = styled.div`
     border: 0;
   }
 
-  .modalContent .sharedPost {
+  div.modalContent div.sharedPost {
     padding: 15px;
     border-radius: 10px;
     border: 2px solid #eef;
   }
 
-  .modalContent .shareButtons {
+  div.modalContent div.publishButtonContainer {
     margin-top: 10px;
 
     width: 100%;
 
     align-self: center;
   }
-  .modalContent .shareButtons button {
+
+  div.modalContent div.publishButtonContainer button {
     border: 0;
     border-radius: 2px;
 
@@ -593,15 +729,15 @@ export const ShareModal = styled.div`
 
     padding: 10px 14px;
 
-    font-size: 14px;
+    font-size: 1.4rem;
 
     cursor: pointer;
 
     transition: all 0.2s;
   }
 
-  .modalContent .shareButtons button:hover {
-    background-color: #037AE2;
+  div.modalContent div.publishButtonContainer button:hover {
+    background-color: rgba(5, 173, 224, 0.9);
   }
 `;
 
@@ -632,7 +768,7 @@ export const DeleteModal = styled.div`
     }
   }
 
-  .modalContent {
+  div.modalContent {
     margin: auto;
     padding: 15px;
     width: 20%;
@@ -651,52 +787,52 @@ export const DeleteModal = styled.div`
     text-align: center;
   }
 
-  .modalContent h2 {
+  div.modalContent h2 {
     margin-bottom: 10px;
 
     font-weight: bold;
   }
 
-  .modalContent p {
+  div.modalContent p {
     color: #888;
   }
 
-  .modalContent div {
+  div.modalContent div {
     margin-top: 20px;
   }
 
-  .modalContent div button {
+  div.modalContent div button {
     border: 0;
     border-radius: 2px;
 
     padding: 10px 14px;
 
-    font-size: 14px;
+    font-size: 1.4rem;
 
     cursor: pointer;
 
     transition: all 0.2s;
   }
 
-  .modalContent div button:first-child {
+  div.modalContent div button:first-child {
     margin-right: 10px;
 
     color: #05ade0;
     background-color: #fff;
   }
 
-  .modalContent div button:first-child:hover {
+  div.modalContent div button:first-child:hover {
     background: #EEE;
   }
 
-  .modalContent div button:last-child {
+  div.modalContent div button:last-child {
     background: #E0245E;
     color: #fff;
 
     margin-left: auto;
   }
 
-  .modalContent div button:last-child:hover {
+  div.modalContent div button:last-child:hover {
     background-color: rgba(224, 36, 94, 0.7);
   }
 `;

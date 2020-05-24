@@ -9,6 +9,10 @@ export const GlobalStyle = createGlobalStyle`
         box-sizing: border-box;
     }
 
+    :root {
+      font-size: 10px;
+    }
+
     body{
         background: #E5E6F0;
         -webkit-font-smoothing: antialiased;
