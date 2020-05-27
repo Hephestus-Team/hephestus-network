@@ -26,7 +26,7 @@ const Feed = ({ setPosts, posts }) => {
 
   const { name, uniqid } = store.getState().user;
 
-  const structingPost = (post) => {
+  const getStructedPost = (post) => {
     const noRepliedComments = post.comments
       .filter((comment) => !comment.is_reply)
       .map((comment) => ({ ...comment, commenting: false, commentBar: '' }))
@@ -62,7 +62,7 @@ const Feed = ({ setPosts, posts }) => {
     return [noTargetPosts];
   };
 
-  const showSnackBar = (type) => {
+  const setShowSnackBar = (type) => {
     setOpenSnack({
       isShow: true,
       type,
@@ -74,23 +74,39 @@ const Feed = ({ setPosts, posts }) => {
     }), 4000);
   };
 
-  const handlePublish = async (publishContent) => {
-    if (!publishText) { return; }
+  const setCommentInteractions = (targetPost, newCommentData, targetComment = null) => {
+    if (targetComment) {
+      const [noTargetPosts, noTargetComments] = getNoTargets(
+        targetPost.uniqid, targetComment.uniqid, targetPost.comments,
+      );
 
-    try {
-      const response = await api.post('/publish', { content: publishContent, uniqid, name });
+      const comments = [...noTargetComments, { ...targetComment, ...newCommentData }]
+        .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
 
-      setPosts([
-        ...posts,
-        structingPost(response.data),
-      ].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
+      setPosts([...noTargetPosts, {
+        ...targetPost,
+        comments,
+      }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
+    } else {
+      const [noTargetPosts] = getNoTargets(targetPost.uniqid);
 
-      setPublishText('');
-
-      showSnackBar('publish');
-    } catch (err) {
-      console.error(err);
+      setPosts([...noTargetPosts, { ...targetPost, ...newCommentData }]
+        .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
     }
+  };
+
+  const setShowReplies = (targetComment, targetPost) => {
+    const [noTargetPosts, noTargetComments] = getNoTargets(
+      targetPost.uniqid, targetComment.uniqid, targetPost.comments,
+    );
+
+    const comments = [...noTargetComments,
+      { ...targetComment, showReplies: !targetComment.showReplies }]
+      .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
+
+    setPosts([...noTargetPosts,
+      { ...targetPost, comments }]
+      .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
   };
 
   const sendComment = async (sender, post, comment = null) => {
@@ -118,108 +134,27 @@ const Feed = ({ setPosts, posts }) => {
       } catch (err) {
         return err;
       }
-    }
-
-    const commentObj = {
-      sender: {
-        uniqid: sender.uniqid,
-        content: post.commentBar,
-        name: sender.name,
-      },
-      poster: {
-        uniqid: post.is_share ? post.shareMetadata.user : sender.uniqid,
-        post: post.uniqid,
-      },
-    };
-
-    try {
-      const response = await api.post('/comment/', commentObj);
-
-      return response.data;
-    } catch (err) {
-      return err;
-    }
-  };
-
-  const handleCommentting = async (
-    targetPost,
-    newCommentData,
-    targetComment = null,
-    hasNewComment = false,
-  ) => {
-    if (targetComment) {
-      const [noTargetPosts, noTargetComments] = getNoTargets(
-        targetPost.uniqid, targetComment.uniqid, targetPost.comments,
-      );
-
-      if (!hasNewComment) {
-        const comments = [...noTargetComments, { ...targetComment, ...newCommentData }]
-          .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
-
-
-        setPosts([...noTargetPosts, {
-          ...targetPost,
-          comments,
-        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
-      } else {
-        const commentObj = await sendComment(
-          {
-            name,
-            uniqid,
-          }, targetPost, targetComment,
-        );
-
-        const comments = [...noTargetComments, {
-          ...targetComment,
-          ...newCommentData,
-          showReplies: true,
-          replies: [...targetComment.replies, commentObj]
-            .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1)),
-        }].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
-
-        setPosts([...noTargetPosts, {
-          ...targetPost,
-          comments,
-        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
-      }
     } else {
-      const [noTargetPosts] = getNoTargets(targetPost.uniqid);
+      const commentObj = {
+        sender: {
+          uniqid: sender.uniqid,
+          content: post.commentBar,
+          name: sender.name,
+        },
+        poster: {
+          uniqid: post.is_share ? post.shareMetadata.user : sender.uniqid,
+          post: post.uniqid,
+        },
+      };
 
-      if (!hasNewComment) {
-        setPosts([...noTargetPosts, { ...targetPost, ...newCommentData }]
-          .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
-      } else {
-        const commentObj = await sendComment({ name, uniqid }, targetPost);
+      try {
+        const response = await api.post('/comment/', commentObj);
 
-        setPosts([...noTargetPosts,
-          {
-            ...targetPost,
-            ...newCommentData,
-            comments: [...targetPost.comments, {
-              ...commentObj,
-              commenting: false,
-              commentBar: '',
-              replies: [],
-              showReplies: false,
-            }].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1)),
-          }]
-          .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
+        return response.data;
+      } catch (err) {
+        return err;
       }
     }
-  };
-
-  const setShowReplies = (targetComment, targetPost) => {
-    const [noTargetPosts, noTargetComments] = getNoTargets(
-      targetPost.uniqid, targetComment.uniqid, targetPost.comments,
-    );
-
-    const comments = [...noTargetComments,
-      { ...targetComment, showReplies: !targetComment.showReplies }]
-      .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
-
-    setPosts([...noTargetPosts,
-      { ...targetPost, comments }]
-      .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
   };
 
   const sendLike = async (sender, post, comment = null) => {
@@ -245,58 +180,97 @@ const Feed = ({ setPosts, posts }) => {
       } catch (err) {
         return err;
       }
-    }
+    } else {
+      const likeObj = {
+        poster: {
+          uniqid: post.poster,
+          post: post.uniqid,
+        },
+        sender: {
+          uniqid: sender.uniqid,
+          name: sender.name,
+        },
+      };
 
-    const likeObj = {
-      poster: {
-        uniqid: post.poster,
-        post: post.uniqid,
-      },
-      sender: {
-        uniqid: sender.uniqid,
-        name: sender.name,
-      },
-    };
+      try {
+        const response = await api.post('/like/post', likeObj);
 
-    try {
-      const response = await api.post('/like/post', likeObj);
-
-      return response.data;
-    } catch (err) {
-      return err;
+        return response.data;
+      } catch (err) {
+        return err;
+      }
     }
   };
 
-  const handleLike = async (targetPost, targetComment = null) => {
-    if (targetComment) {
-      /* Regular comment */
-      if (!targetComment.is_reply) {
-        const [noTargetPosts, noTargetComments] = getNoTargets(
-          targetPost.uniqid, targetComment.uniqid, targetPost.comments,
-        );
+  const handleCreatePublish = async (publishContent) => {
+    if (!publishText) { return; }
 
-        const likedComment = await sendLike({
+    try {
+      const response = await api.post('/publish', { content: publishContent, uniqid, name });
+
+      setPosts([
+        ...posts,
+        getStructedPost(response.data),
+      ].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
+
+      setPublishText('');
+
+      setShowSnackBar('publish');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCreateComment = async (targetPost, targetComment = null) => {
+    if (targetComment) {
+      const [noTargetPosts, noTargetComments] = getNoTargets(
+        targetPost.uniqid, targetComment.uniqid, targetPost.comments,
+      );
+
+      const commentObj = await sendComment(
+        {
           name,
           uniqid,
-        }, targetPost, targetComment);
+        }, targetPost, targetComment,
+      );
 
-        const comments = [
-          ...noTargetComments,
-          {
-            ...likedComment,
+      const comments = [...noTargetComments, {
+        ...targetComment,
+        commenting: false,
+        commentBar: '',
+        showReplies: true,
+        replies: [...targetComment.replies, commentObj]
+          .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1)),
+      }].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
+
+      setPosts([...noTargetPosts, {
+        ...targetPost,
+        comments,
+      }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
+    } else {
+      const [noTargetPosts] = getNoTargets(targetPost.uniqid);
+
+      const commentObj = await sendComment({ name, uniqid }, targetPost);
+
+      setPosts([...noTargetPosts,
+        {
+          ...targetPost,
+          commenting: false,
+          commentBar: '',
+          comments: [...targetPost.comments, {
+            ...commentObj,
             commenting: false,
             commentBar: '',
             replies: [],
             showReplies: false,
-          },
-        ].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
-
-        setPosts([...noTargetPosts, {
-          ...targetPost,
-          comments,
+          }].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1)),
         }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
-        /* Replied comment */
-      } else {
+    }
+  };
+
+  const handleCreateLike = async (targetPost, targetComment = null) => {
+    if (targetComment) {
+      if (targetComment.is_reply) {
         const likedReply = await sendLike({
           name,
           uniqid,
@@ -329,6 +303,31 @@ const Feed = ({ setPosts, posts }) => {
           ...targetPost,
           comments,
         }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
+      } else {
+        const [noTargetPosts, noTargetComments] = getNoTargets(
+          targetPost.uniqid, targetComment.uniqid, targetPost.comments,
+        );
+
+        const likedComment = await sendLike({
+          name,
+          uniqid,
+        }, targetPost, targetComment);
+
+        const comments = [
+          ...noTargetComments,
+          {
+            ...likedComment,
+            commenting: false,
+            commentBar: '',
+            replies: [],
+            showReplies: false,
+          },
+        ].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
+
+        setPosts([...noTargetPosts, {
+          ...targetPost,
+          comments,
+        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
       }
     } else {
       const [noTargetPosts] = getNoTargets(targetPost.uniqid);
@@ -336,30 +335,14 @@ const Feed = ({ setPosts, posts }) => {
       const likedPost = await sendLike({ name, uniqid }, targetPost);
 
       setPosts([...noTargetPosts,
-        structingPost(likedPost),
+        getStructedPost(likedPost),
       ].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
     }
   };
 
-  const handleUnlike = async (targetPost, targetComment) => {
+  const handleDeleteLike = async (targetPost, targetComment) => {
     if (targetComment) {
-      if (!targetComment.is_reply) {
-        await api.delete(`/like/${targetPost.uniqid}/${targetComment.uniqid}/`);
-
-        const [noTargetPosts, noTargetComments] = getNoTargets(
-          targetPost.uniqid, targetComment.uniqid, targetPost.comments,
-        );
-
-        const comments = [
-          ...noTargetComments,
-          { ...targetComment, likes: targetComment.likes.filter((like) => like.user !== uniqid) },
-        ].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
-
-        setPosts([...noTargetPosts, {
-          ...targetPost,
-          comments,
-        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
-      } else {
+      if (targetComment.is_reply) {
         await api.delete(`/like/${targetPost.uniqid}/${targetComment.uniqid}/`);
 
         const noRepliedComment = targetPost.comments.filter(
@@ -392,6 +375,22 @@ const Feed = ({ setPosts, posts }) => {
           ...targetPost,
           comments,
         }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
+      } else {
+        await api.delete(`/like/${targetPost.uniqid}/${targetComment.uniqid}/`);
+
+        const [noTargetPosts, noTargetComments] = getNoTargets(
+          targetPost.uniqid, targetComment.uniqid, targetPost.comments,
+        );
+
+        const comments = [
+          ...noTargetComments,
+          { ...targetComment, likes: targetComment.likes.filter((like) => like.user !== uniqid) },
+        ].sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
+
+        setPosts([...noTargetPosts, {
+          ...targetPost,
+          comments,
+        }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
       }
     } else {
       await api.delete(`/like/${targetPost.uniqid}/`);
@@ -406,7 +405,7 @@ const Feed = ({ setPosts, posts }) => {
     }
   };
 
-  const handleShare = async (post, content) => {
+  const handleCreateShare = async (post, content) => {
     const shareObj = {
       poster: {
         uniqid: post.poster,
@@ -424,12 +423,12 @@ const Feed = ({ setPosts, posts }) => {
       const response = await api.post('/share', shareObj);
 
       setPosts([...posts, {
-        ...structingPost(response.data.share),
+        ...getStructedPost(response.data.share),
         original: response.data.original,
       }]
         .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
 
-      showSnackBar('share');
+      setShowSnackBar('share');
     } catch (err) {
       console.log(err);
     }
@@ -443,10 +442,10 @@ const Feed = ({ setPosts, posts }) => {
     setPosts([...noTargetPosts]
       .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
 
-    showSnackBar('delete');
+    setShowSnackBar('delete');
   };
 
-  const handleEditPost = async (targetPost, content) => {
+  const handleUpdatePost = async (targetPost, content) => {
     const body = {
       post: {
         content,
@@ -458,7 +457,7 @@ const Feed = ({ setPosts, posts }) => {
 
     const [noTargetPosts] = getNoTargets(targetPost.uniqid);
 
-    setPosts([...noTargetPosts, structingPost(response.data)]
+    setPosts([...noTargetPosts, getStructedPost(response.data)]
       .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
   };
 
@@ -500,7 +499,7 @@ const Feed = ({ setPosts, posts }) => {
     }
   };
 
-  const handleEditComment = async (content, targetPost, targetComment, targetReply = null) => {
+  const handleUpdateComment = async (content, targetPost, targetComment, targetReply = null) => {
     const body = {
       comment: {
         uniqid: targetReply ? targetReply.uniqid : targetComment.uniqid,
@@ -570,7 +569,7 @@ const Feed = ({ setPosts, posts }) => {
         />
         <button
           type="button"
-          onClick={() => { handlePublish(publishText); setPublishText(''); }}
+          onClick={() => { handleCreatePublish(publishText); setPublishText(''); }}
         >
           Publish
         </button>
@@ -578,16 +577,28 @@ const Feed = ({ setPosts, posts }) => {
       { posts.length !== 0 && posts.map((post) => (
         <Post
           post={post}
-          handleCommentting={handleCommentting}
-          handleLike={handleLike}
-          handleUnlike={handleUnlike}
-          handleShare={handleShare}
-          handleDeletePost={handleDeletePost}
-          handleEditPost={handleEditPost}
-          handleDeleteComment={handleDeleteComment}
-          handleEditComment={handleEditComment}
-          setShowReplies={setShowReplies}
           key={post.uniqid}
+
+          setShowReplies={(comment) => setShowReplies(comment, post)}
+          setCommentInteractions={(
+            newCommentData, comment = null,
+          ) => setCommentInteractions(post, newCommentData, comment)}
+
+          handleCreateLike={(comment = null) => handleCreateLike(post, comment)}
+          handleDeleteLike={(comment = null) => handleDeleteLike(post, comment)}
+
+          handleCreateShare={(shareText) => handleCreateShare(post, shareText)}
+
+          handleDeletePost={() => handleDeletePost(post)}
+          handleUpdatePost={(editText) => handleUpdatePost(post, editText)}
+
+          handleCreateComment={(comment = null) => handleCreateComment(post, comment)}
+          handleDeleteComment={(
+            targetComment, targetReply = null,
+          ) => handleDeleteComment(post, targetComment, targetReply)}
+          handleUpdateComment={(
+            newContent, targetComment, targetReply,
+          ) => handleUpdateComment(newContent, post, targetComment, targetReply)}
         />
       ))}
 
