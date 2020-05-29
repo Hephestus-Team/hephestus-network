@@ -1,7 +1,9 @@
 module.exports = { 
-	Get: require("./get"),
-	Post: require("./post"),
-	Put: require("./put"),
-	Patch: require("./patch"),
-	Delete: require("./delete")
+	auth: require("./auth"),
+	profile: require("./profile"),
+	friendship: require("./friendship"),
+	publish: require("./publish"),
+	comment: require("./comment"),
+	like: require("./like"),
+	share: require("./share"),
 };

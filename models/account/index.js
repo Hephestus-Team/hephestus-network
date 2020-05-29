@@ -1,4 +1,4 @@
-const mongoose = require("mongoose"), subdocument = require("./subdocument"), lib = require("../lib");
+const mongoose = require("mongoose"), subdocument = require("./subdocument");
 let accountSchema = mongoose.Schema({
 	uniqid: String,
 	first_name: String,
@@ -22,7 +22,7 @@ let accountSchema = mongoose.Schema({
 	created_at: { type: Date, default: Date.now }
 });
 
-lib.load("account", accountSchema);
+accountSchema.statics = require("./statics");
 
 let Account = mongoose.model("Account", accountSchema);
 

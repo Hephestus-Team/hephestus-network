@@ -1,26 +1,55 @@
-module.exports = (app, handlers) => {
+module.exports = (app, handlers, middleware) => {
+	const {
+		auth,
+		profile,
+		friendship,
+		publish,
+		comment,
+		like,
+		share
+	} = handlers;
+
 	app.get("/", (req, res, next) => {
 		res.status(200).send("Express server running !");
 	});
 
-	app.get("/u/(:uniqid)?", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.relationship, handlers.Get.profile);
-	app.get("/publish/:uniqid", handlers.Post.jwt, handlers.Get.publish);
+	// SPECIAL ROUTES
+	app.post("/signup", auth.signup);
+	app.post("/signin", auth.signin);
+	app.post("/share", middleware.jwt, middleware.uniqid, share.post);
 
-	app.post("/signup", handlers.Post.signup);
-	app.post("/signin", handlers.Post.local);
-	app.post("/add", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.add);
-	app.post("/publish", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.publish);
-	app.post("/like/:type", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.like);
-	app.post("/comment/(:type)?", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.comment);
-	app.post("/share", handlers.Post.jwt, handlers.Post.uniqid, handlers.Post.share);
+	// PROFILE ROUTES
+	app.route("/u/(:uniqid)?")
+		.all(middleware.jwt, middleware.uniqid)
+		.get(profile.get)
+		.patch(profile.patch);
 
-	app.delete("/add/:uniqid", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.add);
-	app.delete("/publish/:uniqid", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.publish);
-	app.delete("/like/:post/(:comment)?", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.like);
-	app.delete("/comment/:uniqid", handlers.Post.jwt, handlers.Post.uniqid, handlers.Delete.comment);
+	// POST ROUTES
+	app.route("/publish/(:uniqid)?")
+		.all(middleware.jwt, middleware.uniqid)
+		.post(publish.post)
+		.get(publish.get)
+		.patch(publish.patch)
+		.delete(publish.delete);
 
-	app.patch("/add", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.add);
-	app.patch("/publish", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.publish);
-	app.patch("/u/(:uniqid)?", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.profile);
-	app.patch("/comment", handlers.Post.jwt, handlers.Post.uniqid, handlers.Patch.comment);
+	// COMMENT ROUTES
+	app.route("/comment/:post/(:comment)?")
+		.all(middleware.jwt, middleware.uniqid) 
+		.post(comment.post)
+		.patch(comment.patch)
+		.delete(comment.delete);
+	
+	// LIKE ROUTES
+	app.route("/like/:post/(:comment)?")
+		.all(middleware.jwt, middleware.uniqid)
+		.post(like.post)
+		.delete(like.delete);
+
+	// FRIENDSHIP ROUTES
+	app.route("/add/:uniqid")
+		.all(middleware.jwt, middleware.uniqid)  
+		.post(friendship.post)
+		.patch(friendship.patch)
+		.delete(friendship.delete);
+
 };
