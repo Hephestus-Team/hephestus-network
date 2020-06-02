@@ -36,8 +36,11 @@ export const PostContainer = styled.section`
 
   p.content {
     font-size: 2rem;
+    line-height: 2.4rem;
 
-    margin: 6px 40px 14px 0;
+    margin: 6px 0 14px;
+
+    white-space: pre-line;
   }
 
   section.original {
@@ -52,18 +55,35 @@ export const PostContainer = styled.section`
   div.editContainer {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
 
     margin-top: 6px;
   }
 
-  div.editContainer div {
-    margin-top: 10px;
+  div.editContainer textarea {
+    width: 98%;
 
-    align-self: flex-end;
+    font-size: 2rem;
+    color: #000;
+
+    padding-right: 30px;
+
+    border-bottom: 2px solid rgb(196, 199, 200);
+
+    align-self: flex-start;
   }
 
-  div.editContainer div div button:last-child {
+  div.editContainer div.underEditContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    width: 100%;
+    margin-top: 14px;
+  }
+
+  div.editContainer div.underEditContainer div.editButtons button:last-child {
     border: 0;
     border-radius: 2px;
     background: #05ade0;
@@ -77,7 +97,7 @@ export const PostContainer = styled.section`
     margin-left: auto;
   }
 
-  div.editContainer div div button:first-child {
+  div.editContainer div.underEditContainer div.editButtons button:first-child {
     margin-right: 10px;
 
     border: 0;
@@ -91,36 +111,17 @@ export const PostContainer = styled.section`
     cursor: pointer;
   }
 
-  div.editContainer textarea {
-    width: 98%;
-
-    font-size: 2rem;
-    font-family: Roboto, Arial, sans-serif;
-    color: #000;
-
-    padding-right: 30px;
-
-    resize: none;
-    overflow: hidden;
-    border: 0;
-    border-bottom: 2px solid #eef;
-
-    align-self: flex-start;
-  }
-
-  footer.likeAndShare {
+  div.likeAndShare {
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-
-    margin-bottom: 20px;
   }
 
-  footer.likeAndShare button svg {
+  div.likeAndShare div button svg {
     margin-right: 10px;
   }
 
-  footer.likeAndShare button.shareButton {
+  div.likeAndShare div button.shareButton {
     border: 0;
     background: none;
 
@@ -135,7 +136,7 @@ export const PostContainer = styled.section`
     color: #909090;
   }
 
-  footer.likeAndShare button.likeButton {
+  div.likeAndShare div button.likeButton {
     margin-right: 24px;
 
     border: 0;
@@ -153,33 +154,74 @@ export const PostContainer = styled.section`
     color: #909090;
   }
 
-  footer.likeAndShare button.likeButton p {
+  div.likeAndShare div button.likeButton p {
     font-size: 1.3rem;
   }
 
-  footer.likeAndShare button.likeButton svg {
+  div.likeAndShare div button.likeButton svg {
     font-size: 2rem;
     font-weight: bold;
+
+    padding: 8;
+  }
+
+  div.likeAndShare div {
+    position: relative;
+  }
+
+  div.likeAndShare div span {
+    visibility: hidden;
+
+    background: #E3E4E7;
+    color: #444;
+
+    text-align: center;
+    padding: 8px;
+
+    font-size: 1.3rem;
+    font-weight: bold;
+    width: auto;
+
+    position: absolute;
+    z-index: 1;
+    top: 150%;
+
+    transition: 0.2s ease-in all;
+  }
+
+  div.likeAndShare div:hover span {
+    visibility: visible;
+  }
+
+  div.likeAndShare div.shareContainer span {
+    right: 10%;
+  }
+
+  div.likeAndShare div.likeContainer span {
+    left: -20%;
   }
 
   aside.commentBar {
     display: flex;
     flex-direction: column;
     align-items: center;
+
+    margin-top: 10px;
   }
 
-  aside.commentBar input {
-    width: 98%;
-    height: 34px;
+  aside.commentBar div.inputContainer textarea {
+    width: 100%;
+    min-height: 24px;
 
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     color: #000;
 
-    border: 0;
-    border-bottom: 3px solid #eef;
+    border-bottom: 2px solid #eef;
+
+    transition: 0.5s ease border-bottom;
   }
 
-  aside.commentBar div {
+  aside.commentBar div:not(.inputContainer) {
     margin-top: 10px;
 
     align-self: flex-end;
@@ -213,8 +255,46 @@ export const PostContainer = styled.section`
     cursor: pointer;
   }
 
+  div.inputContainer {
+    width: 98%;
+
+    position: relative;
+  }
+
+  div.inputContainer span {
+    position: absolute;
+    bottom: 0;
+    left: 45%;
+    z-index: 2;
+
+    height: 2px;
+    width: 10px;
+
+    visibility: hidden;
+
+    background-color: #05ade0;
+    transition: 0.2s ease all;
+  }
+
+  div.inputContainer textarea {
+    width: 100%;
+
+    transition: 0.5s ease all;
+  }
+
+  div.inputContainer textarea:focus ~ span {
+    visibility: visible;
+    width: 100%;
+    left: 0;
+  }
+
+  div.inputContainer textarea ~ span {
+    bottom: 3px;
+  }
+
   div.comments {
     padding: 0 5px;
+    margin-top: 15px;
   }
 `;
 
@@ -315,13 +395,7 @@ export const ShareModal = styled.div`
     margin: 0 auto;
 
     font-size: 1.8rem;
-    font-family: Roboto,sans-serif;
     color: #000;
-
-    box-sizing: border-box;
-    resize: none;
-    overflow: hidden;
-    border: 0;
   }
 
   div.modalContent div.sharedPost {

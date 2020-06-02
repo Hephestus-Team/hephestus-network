@@ -20,8 +20,53 @@ export const CommentContainer = styled.section`
 
   p.content {
     font-size: 1.4rem;
+    line-height: 2rem;
     padding: 1.5px 0;
     margin: 2px 40px 4px 0;
+
+    word-wrap: break-word;
+    white-space: pre-line;
+  }
+
+  div.inputContainer {
+    width: 100%;
+
+    position: relative;
+  }
+
+  div.inputContainer textarea {
+    width: 100%;
+    height: 24px;
+
+    font-size: 1.4rem;
+    color: #000;
+
+    padding: 0;
+    border: 0;
+    border-bottom: 2px solid #C4C7C8;
+
+    transition: 0.5s ease border-bottom;
+  }
+
+  div.inputContainer span {
+    position: absolute;
+    bottom: 3px;
+    left: 45%;
+    z-index: 2;
+
+    height: 2px;
+    width: 10px;
+
+    visibility: hidden;
+
+    background-color: #05ade0;
+    transition: 0.2s ease all;
+  }
+
+  div.inputContainer textarea:focus ~ span {
+    visibility: visible;
+    width: 100%;
+    left: 0;
   }
 
   div.editContainer {
@@ -31,48 +76,46 @@ export const CommentContainer = styled.section`
     margin-top: 6px;
   }
 
-  div.editContainer textarea {
-    font-size: 1.4rem;
-    width: 98%;
-    font-family: Roboto,Arial,sans-serif;
-    color: #000;
-    padding-right: 30px;
-    resize: none;
-    overflow: hidden;
-    border: 0;
-    border-bottom: 2px solid #eef;
+  div.editContainer .inputContainer {
     align-self: flex-start;
   }
 
-  div.editContainer div {
-    margin-top: 10px;
-    flex-direction: row;
-    align-self: flex-end;
+  div.editContainer .inputContainer textarea {
+    padding-right: 45px;
   }
 
-  div.editContainer div div button:first-child {
+  div.editContainer div.underEditContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    width: 100%;
+  }
+
+  div.editContainer div.underEditContainer div.editButtons button:first-child {
     margin-right: 10px;
     border: 0;
     border-radius: 2px;
     color: #05ade0;
     padding: 6px 8px;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     background-color: #fff;
     cursor: pointer;
   }
 
-  div.editContainer div div button:last-child {
+  div.editContainer div.underEditContainer div.editButtons button:last-child {
     border: 0;
     border-radius: 2px;
     background: #05ade0;
     padding: 6px 14px;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: #fff;
     cursor: pointer;
     margin-left: auto;
   }
 
-  footer.likeAndReply {
+  div.likeAndReply {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -80,7 +123,7 @@ export const CommentContainer = styled.section`
     padding: 8px 0;
   }
 
-  footer.likeAndReply button.replyButton {
+  div.likeAndReply button.replyButton {
     color: #909090;
     font-size: 1.3rem;
 
@@ -90,8 +133,10 @@ export const CommentContainer = styled.section`
     cursor: pointer;
   }
 
-  footer.likeAndReply button.likeButton {
+  div.likeAndReply button.likeButton {
     margin-right: 24px;
+
+    position: relative;
 
     display: flex;
     flex-direction: row;
@@ -107,13 +152,38 @@ export const CommentContainer = styled.section`
     cursor: pointer;
   }
 
-  footer.likeAndReply button.likeButton svg {
+  div.likeAndReply button.likeButton svg {
     font-size: 1.6rem;
     margin-right: 10px;
   }
 
-  footer.likeAndReply button.likeButton p {
+  div.likeAndReply button.likeButton p {
     font-size: 1.3rem;
+  }
+
+  div.likeAndReply button.likeButton span {
+    visibility: hidden;
+
+    background: #E3E4E7;
+    color: #444;
+
+    text-align: center;
+    padding: 8px;
+
+    font-size: 1.3rem;
+    font-weight: bold;
+    width: auto;
+
+    position: absolute;
+    z-index: 1;
+    top: 150%;
+    right: 10%;
+
+    transition: 0.2s ease-in all;
+  }
+
+  div.likeAndReply button.likeButton svg:hover ~ span {
+    visibility: visible;
   }
 
   aside.replyBar {
@@ -124,7 +194,7 @@ export const CommentContainer = styled.section`
     align-items: center;
   }
 
-  aside.replyBar div {
+  aside.replyBar div:not(.inputContainer) {
     margin-top: 5px;
 
     align-self: flex-end;
@@ -156,17 +226,6 @@ export const CommentContainer = styled.section`
     cursor: pointer;
 
     margin-left: auto;
-  }
-
-  aside.replyBar input {
-    width: 98%;
-    height: 34px;
-
-    font-size: 1.4rem;
-    color: #000;
-
-    border: 0;
-    border-bottom: 2px solid #eef;
   }
 
   button.viewReplies {
@@ -206,19 +265,53 @@ export const ReplyContainer = styled.div`
 
   p.content {
     font-size: 1.4rem;
+    line-height: 2rem;
     padding: 1.5px 0;
     margin: 2px 40px 4px 0;
+
+    white-space: pre-line;
+    word-wrap: break-word;
   }
 
-  footer.likeContainer {
+  div.editContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    margin-top: 6px;
+  }
+
+  div.editContainer textarea {
+    font-size: 1.4rem;
+    width: 98%;
+
+    color: #000;
+    padding-right: 30px;
+
+    border-bottom: 2px solid #C4C7C8;
+    align-self: flex-start;
+  }
+
+  div.editContainer div.underEditContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    width: 100%;
+  }
+
+  div.likeContainer {
     display: flex;
     justify-content: flex-start;
     align-items: center;
     padding: 8px 0;
   }
 
-  footer.likeContainer button.likeButton {
+  div.likeContainer button.likeButton {
     margin-right: 24px;
+
+    position: relative;
 
     display: flex;
 
@@ -236,35 +329,37 @@ export const ReplyContainer = styled.div`
     cursor: pointer;
   }
 
-  footer.likeContainer button.likeButton svg {
+  div.likeContainer button.likeButton svg {
     font-size: 1.6rem;
     margin-right: 10px;
   }
 
-  footer.likeContainer button.likeButton p {
+  div.likeContainer button.likeButton p {
     font-size: 1.3rem;
   }
 
-  div.editContainer {
-    display: flex;
+  div.likeContainer button.likeButton span {
+    visibility: hidden;
 
-    flex-direction: column;
+    background: #E3E4E7;
+    color: #444;
 
-    align-items: center;
-    margin-top: 6px;
+    text-align: center;
+    padding: 8px;
+
+    font-size: 1.3rem;
+    font-weight: bold;
+    width: auto;
+
+    position: absolute;
+    z-index: 1;
+    top: 150%;
+    right: 10%;
+
+    transition: 0.2s ease-in all;
   }
 
-  div.editContainer textarea {
-    font-size: 1.4rem;
-    width: 98%;
-
-    font-family: Roboto,Arial,sans-serif;
-    color: #000;
-    padding-right: 30px;
-    resize: none;
-    overflow: hidden;
-    border: 0;
-    border-bottom: 2px solid #eef;
-    align-self: flex-start;
+  div.likeContainer button.likeButton svg:hover ~ span {
+    visibility: visible;
   }
 `;

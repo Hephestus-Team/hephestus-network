@@ -1,27 +1,22 @@
+/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable no-param-reassign */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import autosize from 'autosize';
 
-const AutoSizeTextarea = ({ placeholder, value, onChange }) => {
-  const autosize = (element) => {
-    element.style.height = 'inherit';
+import { TextareaContainer } from './styles';
 
-    const computed = window.getComputedStyle(element);
+const AutoSizeTextarea = (props) => {
+  const textareaRef = useRef();
 
-    const height = parseInt(computed.getPropertyValue('border-top-width'), 10)
-      + parseInt(computed.getPropertyValue('padding-top'), 10)
-      + element.scrollHeight
-      + parseInt(computed.getPropertyValue('padding-bottom'), 10)
-      + parseInt(computed.getPropertyValue('border-bottom-width'), 10);
-
-    element.style.height = `${height}px`;
-  };
+  useEffect(() => {
+    autosize(textareaRef.current);
+  }, []);
 
   return (
-    <textarea
-      placeholder={placeholder}
-      value={value}
-      onChange={onChange}
-      onInput={(e) => autosize(e.target)}
+    <TextareaContainer
+      {...props}
+      ref={textareaRef}
+      rows={1}
     />
   );
 };

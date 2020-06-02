@@ -24,6 +24,7 @@ export const ButtonSettings = styled.button`
   position: absolute;
   top: 0;
   right: 0;
+  z-index: 1;
 
   padding: 5px;
 

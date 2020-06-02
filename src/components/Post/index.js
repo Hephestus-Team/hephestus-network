@@ -73,19 +73,26 @@ const Post = ({
         { post.is_share && (
           <header className="shareData">
             <strong className="author">{`${post.name}`}</strong>
+
             { (openEdit.isOpened && openEdit.uniqid === post.uniqid) ? (
               <div className="editContainer">
-                <AutoSizeTextarea
-                  value={editText}
-                  onChange={(e) => { setEditText(e.target.value); }}
-                />
-                <div>
-                  <div>
+                <div className="inputContainer">
+                  <AutoSizeTextarea
+                    value={editText}
+                    onChange={(e) => { setEditText(e.target.value); }}
+                  />
+                  <span />
+                </div>
+
+                <div className="underEditContainer">
+                  <div />
+                  <div className="editButtons">
                     <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
                     <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleUpdatePost(editText); }}> Save </button>
                   </div>
                 </div>
               </div>
+
             ) : <p className="content">{post.content}</p> }
           </header>
         )}
@@ -95,12 +102,49 @@ const Post = ({
 
           { (openEdit.isOpened && openEdit.uniqid === post.uniqid && !post.is_share) ? (
             <div className="editContainer">
-              <AutoSizeTextarea
-                value={editText}
-                onChange={(e) => { setEditText(e.target.value); }}
-              />
-              <div>
-                <div>
+              <div className="inputContainer">
+                <AutoSizeTextarea
+                  value={editText}
+                  onChange={(e) => { setEditText(e.target.value); }}
+                />
+                <span />
+              </div>
+              <div className="underEditContainer">
+                <div className="likeAndShare">
+                  <div className="likeContainer">
+                    <button
+                      type="button"
+                      className="likeButton"
+                      onClick={() => (!post.likes.some((like) => like.user === uniqid)
+                        ? handleCreateLike()
+                        : handleDeleteLike()
+                      )}
+                    >
+                      { post.likes.some((like) => like.user === uniqid)
+                        ? <IoMdThumbsUp /> : <FiThumbsUp /> }
+
+                      <p>
+                        { post.likes ? post.likes.length : '' }
+                      </p>
+                    </button>
+                    <span> I like this </span>
+                  </div>
+
+                  <div className="shareContainer">
+                    <button
+                      type="button"
+                      className="shareButton"
+                      onClick={() => { setOpenShare(true); }}
+                    >
+                      <FiShare2 />
+                      <a>
+                        Share
+                      </a>
+                    </button>
+                    <span> Share </span>
+                  </div>
+                </div>
+                <div className="editButtons">
                   <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
                   <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleUpdatePost(editText); }}> Save </button>
                 </div>
@@ -109,35 +153,42 @@ const Post = ({
           ) : <p className="content">{post.original ? `${post.original.content}` : `${post.content}`}</p> }
         </section>
 
-        <footer className="likeAndShare">
-          <button
-            type="button"
-            className="likeButton"
-            onClick={() => (!post.likes.some((like) => like.user === uniqid)
-              ? handleCreateLike()
-              : handleDeleteLike()
-            )}
-          >
-            { post.likes.some((like) => like.user === uniqid)
-              ? <IoMdThumbsUp /> : <FiThumbsUp /> }
+        { !(openEdit.isOpened && openEdit.uniqid === post.uniqid && !post.is_share) && (
+          <div className="likeAndShare">
+            <div className="likeContainer">
+              <button
+                type="button"
+                className="likeButton"
+                onClick={() => (!post.likes.some((like) => like.user === uniqid)
+                  ? handleCreateLike()
+                  : handleDeleteLike()
+                )}
+              >
+                { post.likes.some((like) => like.user === uniqid)
+                  ? <IoMdThumbsUp /> : <FiThumbsUp /> }
 
-            <p>
-              { post.likes ? post.likes.length : '' }
-            </p>
-          </button>
+                <p>
+                  { post.likes ? post.likes.length : '' }
+                </p>
+              </button>
 
-          <button
-            type="button"
-            className="shareButton"
-            onClick={() => { setOpenShare(true); }}
-          >
-            <FiShare2 />
-            <a>
-              Share
-            </a>
-          </button>
-        </footer>
-
+              <span> I like this </span>
+            </div>
+            <div className="shareContainer">
+              <button
+                type="button"
+                className="shareButton"
+                onClick={() => { setOpenShare(true); }}
+              >
+                <FiShare2 />
+                <a>
+                  Share
+                </a>
+              </button>
+              <span> Share </span>
+            </div>
+          </div>
+        )}
       </article>
 
       <div className="comments">
@@ -159,21 +210,26 @@ const Post = ({
             handleDeleteComment={
               (targetReply = null) => handleDeleteComment(comment, targetReply)
             }
-            handleUpdateComment={
-              (newContent, targetReply = null) => handleUpdateComment(newContent, comment, targetReply)
-            }
+            handleUpdateComment={(
+              newContent, targetReply = null,
+            ) => handleUpdateComment(newContent, comment, targetReply)}
           />
         ))}
       </div>
 
       <aside className="commentBar">
-        <input
-          type="text"
-          placeholder="Add a Comment"
-          value={post.commentBar}
-          onFocus={() => { setCommentInteractions({ commenting: true }); }}
-          onChange={(e) => { setCommentInteractions({ commentBar: e.target.value }); }}
-        />
+        <div className="inputContainer">
+          <AutoSizeTextarea
+            placeholder="Add a public comment..."
+            value={post.commentBar}
+            style={post.commenting ? { borderBottom: '2px solid #C4C7C8' } : { height: '24px' }}
+            onFocus={() => { setCommentInteractions({ commenting: true }); }}
+            onChange={(e) => { setCommentInteractions({ commentBar: e.target.value }); }}
+
+          />
+          <span />
+        </div>
+
         <div>
           { post.commenting && (
             <div>

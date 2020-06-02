@@ -11,6 +11,8 @@ export const NavBarContainer = styled.nav`
   width: 85vw;
   height: 56px;
 
+  z-index: 1;
+
   ul {
     padding: 0;
     margin: 0;

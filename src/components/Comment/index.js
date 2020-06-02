@@ -96,12 +96,38 @@ const Comment = ({
 
         { (openEdit.isOpened && openEdit.uniqid === comment.uniqid) ? (
           <div className="editContainer">
-            <AutoSizeTextarea
-              value={editText}
-              onChange={(e) => { setEditText(e.target.value); }}
-            />
-            <div>
-              <div>
+            <div className="inputContainer">
+              <AutoSizeTextarea
+                value={editText}
+                onChange={(e) => { setEditText(e.target.value); }}
+              />
+              <span />
+            </div>
+
+            <div className="underEditContainer">
+              <div className="likeAndReply">
+                <button
+                  type="button"
+                  className="likeButton"
+                  onClick={() => (
+                    !comment.likes.some((like) => like.user === uniqid)
+                      ? handleCreateLike(comment)
+                      : handleDeleteLike(comment))}
+                >
+                  { comment.likes.some((like) => like.user === uniqid)
+                    ? <IoMdThumbsUp /> : <FiThumbsUp />}
+                  <p>
+                    { comment.likes ? comment.likes.length : '' }
+                  </p>
+                  <span> Like </span>
+                </button>
+
+                <button type="button" className="replyButton" onClick={() => { setCommentInteractions({ commenting: true }); }}>
+                  REPLY
+                </button>
+              </div>
+
+              <div className="editButtons">
                 <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
                 <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleUpdateComment(editText); }}> Save </button>
               </div>
@@ -109,31 +135,41 @@ const Comment = ({
           </div>
         ) : <p className="content">{comment.original ? `${comment.original.content}` : `${comment.content}`}</p> }
 
-        <footer className="likeAndReply">
-          <button
-            type="button"
-            className="likeButton"
-            onClick={() => (
-              !comment.likes.some((like) => like.user === uniqid)
-                ? handleCreateLike(comment)
-                : handleDeleteLike(comment))}
-          >
-            { comment.likes.some((like) => like.user === uniqid)
-              ? <IoMdThumbsUp /> : <FiThumbsUp />}
-            <p>
-              { comment.likes ? comment.likes.length : '' }
-            </p>
-          </button>
-          <button type="button" className="replyButton" onClick={() => { setCommentInteractions({ commenting: true }); }}>
-            REPLY
-          </button>
-        </footer>
-
+        { !(openEdit.isOpened && openEdit.uniqid === comment.uniqid) && (
+          <div className="likeAndReply">
+            <button
+              type="button"
+              className="likeButton"
+              onClick={() => (
+                !comment.likes.some((like) => like.user === uniqid)
+                  ? handleCreateLike(comment)
+                  : handleDeleteLike(comment))}
+            >
+              { comment.likes.some((like) => like.user === uniqid)
+                ? <IoMdThumbsUp /> : <FiThumbsUp />}
+              <p>
+                { comment.likes ? comment.likes.length : '' }
+              </p>
+              <span> Like </span>
+            </button>
+            <button type="button" className="replyButton" onClick={() => { setCommentInteractions({ commenting: true }); }}>
+              REPLY
+            </button>
+          </div>
+        )}
       </article>
 
       { comment.commenting && (
       <aside className="replyBar">
-        <input type="text" placeholder="Add a Comment" value={comment.commentBar} onChange={(e) => setCommentInteractions({ commentBar: e.target.value })} />
+        <div className="inputContainer">
+          <AutoSizeTextarea
+            placeholder="Add a public reply..."
+            value={comment.commentBar}
+            onChange={(e) => setCommentInteractions({ commentBar: e.target.value })}
+          />
+          <span />
+        </div>
+
         <div>
           <div>
             <button type="button" onClick={() => { setCommentInteractions({ commenting: false, commentBar: '' }); }}> Cancel </button>
@@ -232,12 +268,32 @@ const Comment = ({
 
           { (openEdit.isOpened && openEdit.uniqid === commentReply.uniqid) ? (
             <div className="editContainer">
-              <AutoSizeTextarea
-                value={editText}
-                onChange={(e) => { setEditText(e.target.value); }}
-              />
-              <div>
-                <div>
+              <div className="inputContainer">
+                <AutoSizeTextarea
+                  value={editText}
+                  onChange={(e) => { setEditText(e.target.value); }}
+                />
+                <span />
+              </div>
+              <div className="underEditContainer">
+                <div className="likeContainer">
+                  <button
+                    type="button"
+                    className="likeButton"
+                    onClick={() => (!commentReply.likes.some((like) => like.user === uniqid)
+                      ? handleCreateLike(commentReply)
+                      : handleDeleteLike(commentReply))}
+                  >
+                    { commentReply.likes.some((like) => like.user === uniqid)
+                      ? <IoMdThumbsUp /> : <FiThumbsUp />}
+                    <p>
+                      { commentReply.likes ? commentReply.likes.length : '' }
+                    </p>
+                    <span> Like </span>
+                  </button>
+                </div>
+
+                <div className="editButtons">
                   <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); }}> Cancel </button>
                   <button type="button" onClick={() => { setOpenEdit({ isOpened: false, uniqid: '' }); handleUpdateComment(editText, commentReply); }}> Save </button>
                 </div>
@@ -245,7 +301,9 @@ const Comment = ({
             </div>
           ) : <p className="content">{commentReply.original ? `${commentReply.original.content}` : `${commentReply.content}`}</p> }
 
-          <footer className="likeContainer">
+          { !(openEdit.isOpened && openEdit.uniqid === commentReply.uniqid)
+          && (
+          <div className="likeContainer">
             <button
               type="button"
               className="likeButton"
@@ -258,8 +316,11 @@ const Comment = ({
               <p>
                 { commentReply.likes ? commentReply.likes.length : '' }
               </p>
+              <span> Like </span>
             </button>
-          </footer>
+          </div>
+          )}
+
         </ReplyContainer>
       ))}
     </CommentContainer>

@@ -1,7 +1,7 @@
 import styled from 'styled-components';
 
 export const PageContainer = styled.div`
-  margin: auto;
+  margin: 0 auto;
   margin-top: 20px;
 
   display: grid;
@@ -10,6 +10,9 @@ export const PageContainer = styled.div`
 
   main {
     max-width: 40vw;
+    width: 40vw;
+
+    margin: 0 auto;
   }
 
   @media only screen and (max-width: 1200px) {
