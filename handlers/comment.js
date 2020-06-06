@@ -5,84 +5,73 @@ exports.post = async (req, res, next) => {
 
 	try {
 
-		// FIND POSTER
-		poster = await Account.findOne({ uniqid: req.body.poster.uniqid, "posts.uniqid": req.params.post }, { _id: 0, uniqid: 1 }, {lean: true});
+		// FIND POST
+		poster = await Account.findOne({ "posts.uniqid": req.params.post }, { _id: 0, uniqid: 1 }, { lean: true });
 		if (!poster) return res.status(404).send({ message: { post: "This post does not exists" } });
 
-	} catch (err) {
-		console.log(err); return res.status(500).send({ message: { database: "Internal error" } });
-	}
+		// IF COMMENT PARAMS === UNDEFINED, IT IS A COMMENT
+		// ELSE IT IS A REPLY
+		let comment = {
+			uniqid: Account.setUniqid("post"),
+			content: req.body.sender.content,
+			user: req.header("u"),
+			name: req.body.sender.name
+		};
 
-	// IF COMMENT PARAMS === UNDEFINED, IT IS A COMMENT
-	// ELSE IT IS A REPLY
-	let comment = {
-		uniqid: Account.setUniqid("post"),
-		content: req.body.sender.content,
-		user: req.header("u"),
-		name: req.body.sender.name
-	};
-
-	if(!req.params.comment){
-
-		let account, postIndex, commentIndex;
-
-		try {
+		if (!req.params.comment) {
 
 			// SAVE COMMENT
-			account = await Account.findOneAndUpdate({ uniqid: req.body.poster.uniqid, "posts.uniqid": req.params.post }, { $push: { "posts.$.comments": comment } }, { new: true, setDefaultsOnInsert: true, lean: true });
+			let account = await Account.findOneAndUpdate({ uniqid: poster.uniqid, "posts.uniqid": req.params.post }, { $push: { "posts.$.comments": comment } }, { new: true, setDefaultsOnInsert: true, lean: true });
 			if (!account) return res.status(422).send({ message: { comment: "Cannot comment in this post" } });
 
-			postIndex = getIndexByUniqid(account.posts, req.params.post);
-			commentIndex = getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
+			let postIndex = getIndexByUniqid(account.posts, req.params.post);
+			let commentIndex = getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
 
 			return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 
-		} catch (err) {
-			console.log(err); return res.status(500).send({ message: { database: "Internal error" } });
-		}
-		
-	}else{
+		} else {
 
-		let commentator, postIndex, commentIndex;
-
-		let replyMetadata = {
-			user: req.body.commentator.uniqid,
-			name: req.body.commentator.name,
-			comment: req.params.comment
-		};
-		
-		comment.is_reply = true;
-		comment.replyMetadata = replyMetadata;
-
-		try {
-
-			
-			let projection ={
+			let projection = {
 				$project: {
 					uniqid: 1,
+					first_name: 1,
+					last_name: 1,
 					_id: 0
 				}
 			};
-			
-			// FIND COMMENT
-			let referrerComment = await Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.comments.uniqid": req.params.comment, "posts.comments.user": req.body.commentator.uniqid } }, projection]);
-			if (referrerComment.length === 0) return res.status(404).send({ message: { comment: "This comment does not exists" } });
+
+			// FIND COMMENTATOR
+			let commentator = await Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.comments.uniqid": req.params.comment } }, projection]);
+			if (commentator.length === 0) return res.status(404).send({ message: { comment: "This comment does not exists" } });
+
+			// BUILD THE REPLYMETADATA OBJ
+			commentator = commentator[0];
+
+			let replyMetadata = {
+				user: commentator.uniqid,
+				name: `${commentator.first_name} ${commentator.last_name}`,
+				comment: req.params.comment
+			};
+
+			// SET NEW PROPERTIES IN THE REPLY
+			comment.is_reply = true;
+			comment.replyMetadata = replyMetadata;
 
 			// SAVE REPLY
-			commentator = await Account.findOneAndUpdate({ uniqid: req.body.poster.uniqid, "posts.uniqid": req.params.post }, { $push: { "posts.$.comments": comment } }, { new: true, setDefaultsOnInsert: true, lean: true});
-			if (!commentator) return res.status(422).send({ message: { comment: "Cannot reply this comment" } });
-			
-			postIndex = getIndexByUniqid(commentator.posts, req.params.post);
-			commentIndex = getIndexByUniqid(commentator.posts[postIndex].comments, comment.uniqid);
+			let account = await Account.findOneAndUpdate({ uniqid: poster.uniqid, "posts.uniqid": req.params.post }, { $push: { "posts.$.comments": comment } }, { new: true, setDefaultsOnInsert: true, lean: true });
+			if (!account) return res.status(422).send({ message: { comment: "Cannot reply this comment" } });
 
-			return res.status(200).send(commentator.posts[postIndex].comments[commentIndex]);
+			let postIndex = getIndexByUniqid(account.posts, req.params.post);
+			let commentIndex = getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
 
-		}catch(err){
-
-			console.log(err); return res.status(500).send({ message: { database: "Internal error" } });
+			return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 
 		}
 	}
+	catch (err) {
+		console.log(err); return res.status(500).send({ message: { server: "Internal error" } });
+	}
+
 };
 
 exports.patch = async (req, res, next) => {
@@ -98,7 +87,7 @@ exports.patch = async (req, res, next) => {
 		};
 		
 		let commentator = await Account.aggregate([{ $unwind: "$posts" }, { $match: { "posts.comments.uniqid": req.params.comment, "posts.comments.user": req.header("u") } }, projection]);
-		if (commentator.length === 0) return res.status(400).send({ message: { comment: "This comment does not exists" } });
+		if (commentator.length === 0) return res.status(404).send({ message: { comment: "This comment does not exists" } });
 
 		// PARSE AGGREGATE ARRAY
 		let post = commentator.map(commentator => commentator.posts)[0];
@@ -115,7 +104,7 @@ exports.patch = async (req, res, next) => {
 		
 		// CHECK IF THE CONTENT IS THE SAME
 		if(old_comment.content === req.body.comment.content) {
-			return res.status(400).send({ message: { comment: "Cannot save same content" } });
+			return res.status(409).send({ message: { comment: "Cannot save same content" } });
 		}
 
 		// UPDATE COMMENT
@@ -160,7 +149,7 @@ exports.delete = async(req, res, next) => {
 		let query = { [queryProperty]: { uniqid: req.params.comment } };
 
 		// DELETE COMMENT
-		let comment = await Account.findOneAndUpdate({uniqid: posterUniqid, "posts.uniqid": req.params.post}, {$pull: query}, {new:true, lean: true});
+		let comment = await Account.findOneAndUpdate({ uniqid: posterUniqid, "posts.uniqid": req.params.post }, { $pull: query }, { new: true, lean: true });
 		if (!comment) return res.status(400).send({ message: { comment: "Cannot delete this comment" } });
 
 		return res.status(204).send();

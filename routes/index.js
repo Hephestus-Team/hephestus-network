@@ -1,5 +1,5 @@
 module.exports = (app, handlers, middleware) => {
-	const {
+	let {
 		auth,
 		profile,
 		friendship,
@@ -16,7 +16,7 @@ module.exports = (app, handlers, middleware) => {
 	// SPECIAL ROUTES
 	app.post("/signup", auth.signup);
 	app.post("/signin", auth.signin);
-	app.post("/share", middleware.jwt, middleware.uniqid, share.post);
+	app.post("/share/:uniqid", middleware.jwt, middleware.uniqid, share.post);
 
 	// PROFILE ROUTES
 	app.route("/u/(:uniqid)?")

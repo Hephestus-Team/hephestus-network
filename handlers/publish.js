@@ -2,6 +2,7 @@ let Account = require("../models/account"), { getIndexByUniqid } = require("../l
 
 exports.post = async (req, res, next) => {
 
+	// BUILD THE POST OBJECT
 	let post = {
 		uniqid: Account.setUniqid("post"),
 		content: req.body.content,
@@ -20,7 +21,7 @@ exports.post = async (req, res, next) => {
 		return res.status(200).send(poster.posts[postIndex]);
 
 	} catch (err) {
-		console.log(err); return res.status(500).send({ message: { database: "Internal error" } });
+		console.log(err); return res.status(500).send({ message: { server: "Internal error" } });
 	}
 
 };
@@ -101,7 +102,7 @@ exports.patch = async (req, res, next) => {
 		}
 
 		// UPDATE POST
-		let account = await Account.findOneAndUpdate({uniqid: req.header("u"), "posts.uniqid": req.params.uniqid}, {$set: {"posts.$.content": req.body.post.content}, $push: {"posts.$.history": old_post}}, {new: true, lean: true});
+		let account = await Account.findOneAndUpdate({ uniqid: req.header("u"), "posts.uniqid": req.params.uniqid }, { $set: { "posts.$.content": req.body.post.content }, $push: { "posts.$.history": old_post } }, { new: true, lean: true });
 		if (!account) return res.status(422).send({ message: { post: "Cannot update this post" } });
 
 		let postIndex = getIndexByUniqid(account.posts, req.params.uniqid);
@@ -109,7 +110,7 @@ exports.patch = async (req, res, next) => {
 		return res.status(200).send(account.posts[postIndex]);
 
 	} catch (err) {
-		console.log(err); return res.status(500).send({ message: { database: "Internal error" } });
+		console.log(err); return res.status(500).send({ message: { server: "Internal error" } });
 	}
 };
 

@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt"), uniqid = require("uniqid"), jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt"), uniqid = require("uniqid"), jwt = require("jsonwebtoken"), { mongo: mongoConfig, jwt: jwtConfig } = require("../../credentials/cfg");
 
 module.exports = {
 	// AUTH
@@ -19,7 +19,7 @@ module.exports = {
 	},
 	getJwtPayload: function (header_token) {
 		let token = header_token.split(" ")[1];
-		return jwt.verify(token, require("../../../credentials/cfg").jwt.jwtSecret).id;
+		return jwt.verify(token, jwtConfig.secret).id;
 	},
 	// HELPERS
 	getNameByUniqid: async function (uniqid) {
@@ -48,8 +48,9 @@ module.exports = {
     
 		//IF FRIEND, RELATIONSHIP == 2
 		let friendships = profile.friendships;
+		let friendshipsUniqid = friendships.forEach(friendship => friendship.uniqid);
         
-		let isFriend = friendships.some(friendship => friendship.friend === userUniqid);
+		let isFriend = friendships.some(friendship => (friendship.friend === userUniqid && friendship.is_accepted === true));
     
 		if(isFriend) return { profileIsPublic, relationship: 2 };
     
@@ -58,7 +59,7 @@ module.exports = {
     
 		try{
             
-			friendsProfile = await this.findOne({uniqid: {$in: friendships}, "friendships.friend": userUniqid}, {_id: 0, friendships: 1}, { lean: true });
+			friendsProfile = await this.findOne({uniqid: {$in: friendshipsUniqid}, "friendships.friend": userUniqid}, {_id: 0, friendships: 1}, { lean: true });
             
 			//IF PROFILE DONT HAVE FRIENDS, RELATIONSHIP == 1
 			if(!friendsProfile) return { profileIsPublic, relationship: 1 };
@@ -74,6 +75,40 @@ module.exports = {
 		//IF ISNT FRIEND NOR MUTUAL FRIEND, RELATIONSHIP == 1
 		return { profileIsPublic, relationship: 1 };
     
+	},
+	getOriginalPost: async function(shareUniqid){
+		try {
+
+			let projection = {
+				$project: {
+					_id: 0,
+					uniqid: 1,
+					posts: 1,
+					first_name: 1,
+					last_name: 1
+				}
+			};
+	
+			// FIND ORIGINAL'S USER POST
+			let original = await this.aggregate([{ $unwind: "$posts" }, { $match: {"posts.shares.post": shareUniqid} }, projection]);
+			if (original.length === 0) return null;
+	
+			// PARSE AGGREGATE ARRAY
+			original = original[0];
+	
+			// BUILD ORIGINAL OBJ
+			let originalObj = {
+				poster: original.uniqid,
+				name: `${original.first_name} ${original.last_name}`,
+				content: original.posts.content,
+				created_at: original.posts.created_at
+			};
+	
+			return originalObj;
+
+		} catch (err) {
+			return console.log(err);
+		}
 	},
 	// PROFILE
 	parseFriendships: async function (profileUniqid) {

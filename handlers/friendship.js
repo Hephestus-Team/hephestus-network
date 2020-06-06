@@ -1,4 +1,4 @@
-let Account = require("../models/account");
+let Account = require("../models/account"), { getIndexByUniqid } = require("../lib");
 
 exports.post = async (req, res, next) => {
 	try {
@@ -41,7 +41,7 @@ exports.post = async (req, res, next) => {
 		let sender = await Account.findOneAndUpdate({ uniqid: req.header("u") }, { $push: { friendships: senderFriendship } }, { new: true, setDefaultsOnInsert: true, lean: true });
 		if (!sender) return res.status(422).send({ message: { friendship: "Cannot send a friendship request for the user" } });
 
-		return res.status(200).send({ message: { friendship: "Friendship request sended" } });
+		return res.status(201).send({ message: { friendship: "Friendship request sended" } });
 	
 	} catch (err) {
 		console.log(err); return res.status(500).send({ message: { database: "Internal error" } });
@@ -52,11 +52,16 @@ exports.post = async (req, res, next) => {
 exports.patch = async (req, res, next) => {
 	try {
 		// CHECK IF REQUEST EXISTS
-		let request = await Account.findOne({ uniqid: req.header("u"), "friendships.uniqid": req.params.uniqid, "friendships.is_sender": true}, { _id: 0, friendships: { $elemMatch: { uniqid: "cvwu1z1z4kapg3kj0" } } }, { lean: true });
-		if (!request) return res.status(404).send({ message: { request: "This request does not exists" } });
+		let receiver = await Account.findOne({ uniqid: req.header("u"), "friendships.uniqid": req.params.uniqid, "friendships.is_sender": false}, { _id: 0, friendships: 1 }, { lean: true });
+		if (!receiver) return res.status(404).send({ message: { request: "This request does not exists" } });
+
+		// GET FRIENDSHIP INDEX AND BUILD QUERY
+		let requestIndex = getIndexByUniqid(receiver.friendships, req.params.uniqid);
+		let querySet = { [`friendships.${requestIndex}.is_accepted`]: true };
+		let queryUnset = { [`friendships.${requestIndex}.is_sender`]: "" };
 
 		// UPDATE REQUEST
-		request = await Account.updateMany({ "friendships.uniqid": req.params.uniqid }, { $set: { "friendships.0.is_accepted": true }, $unset: { "friendships.0.is_sender": "" } }, { new: true, lean: true });
+		let request = await Account.updateMany({ "friendships.uniqid": req.params.uniqid }, { $set: querySet, $unset: queryUnset }, { new: true, lean: true });
 		if (!request) return res.status(422).send({ message: { friendship: "Cannot accept this friendship request" } });
 
 		return res.status(201).send({ message: { friendship: "Now you are friends" } });
@@ -76,7 +81,7 @@ exports.delete = async (req, res, next) => {
 		request = await Account.updateMany({ "friendships.uniqid": req.params.uniqid }, { $pull: { "friendships": { "uniqid": req.params.uniqid } } }, { lean: true, new: true });
 		if (!request) return res.status(422).send({ message: { friendship: "Cannot refuse this friendship request" } });
 
-		return res.status(201).send({ message: { friendship: "You refused the friendship request" } });
+		return res.status(204).send();
 
 	} catch (err) {
 		console.log(err); return console.log({ message: { database: "Internal error" } });
