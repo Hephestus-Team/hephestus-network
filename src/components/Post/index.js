@@ -127,7 +127,9 @@ const Post = ({
                         { post.likes ? post.likes.length : '' }
                       </p>
                     </button>
-                    <span> I like this </span>
+
+                    { post.likes.some((like) => like.user === uniqid)
+                      ? <span> Unlike </span> : <span> I like this </span> }
                   </div>
 
                   <div className="shareContainer">
@@ -172,7 +174,8 @@ const Post = ({
                 </p>
               </button>
 
-              <span> I like this </span>
+              { post.likes.some((like) => like.user === uniqid)
+                ? <span> Unlike </span> : <span> I like this </span> }
             </div>
             <div className="shareContainer">
               <button

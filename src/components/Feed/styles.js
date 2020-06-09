@@ -51,6 +51,7 @@ export const FeedContainer = styled.main`
 
   .snackBar svg {
     color: #fff;
+    font-size: 1.6rem;
   }
 
   .snackBar svg:last-child {

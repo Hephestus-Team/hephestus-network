@@ -119,7 +119,9 @@ const Comment = ({
                   <p>
                     { comment.likes ? comment.likes.length : '' }
                   </p>
-                  <span> Like </span>
+
+                  { comment.likes.some((like) => like.user === uniqid)
+                    ? <span> Unlike </span> : <span> Like </span> }
                 </button>
 
                 <button type="button" className="replyButton" onClick={() => { setCommentInteractions({ commenting: true }); }}>
@@ -150,7 +152,9 @@ const Comment = ({
               <p>
                 { comment.likes ? comment.likes.length : '' }
               </p>
-              <span> Like </span>
+
+              { comment.likes.some((like) => like.user === uniqid)
+                ? <span> Unlike </span> : <span> Like </span> }
             </button>
             <button type="button" className="replyButton" onClick={() => { setCommentInteractions({ commenting: true }); }}>
               REPLY
@@ -289,7 +293,9 @@ const Comment = ({
                     <p>
                       { commentReply.likes ? commentReply.likes.length : '' }
                     </p>
-                    <span> Like </span>
+
+                    { commentReply.likes.some((like) => like.user === uniqid)
+                      ? <span> Unlike </span> : <span> Like </span> }
                   </button>
                 </div>
 
@@ -316,7 +322,9 @@ const Comment = ({
               <p>
                 { commentReply.likes ? commentReply.likes.length : '' }
               </p>
-              <span> Like </span>
+
+              { commentReply.likes.some((like) => like.user === uniqid)
+                ? <span> Unlike </span> : <span> Like </span> }
             </button>
           </div>
           )}

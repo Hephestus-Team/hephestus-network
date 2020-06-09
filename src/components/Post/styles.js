@@ -402,6 +402,8 @@ export const ShareModal = styled.div`
     padding: 15px;
     border-radius: 10px;
     border: 2px solid #eef;
+
+    margin-top: 10px;
   }
 
   div.modalContent div.publishButtonContainer {

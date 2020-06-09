@@ -110,95 +110,39 @@ const Feed = ({ setPosts, posts }) => {
   };
 
   const sendComment = async (sender, post, comment = null) => {
-    if (comment) {
-      const commentObj = {
-        commentator: {
-          uniqid: comment.user,
-          comment: comment.uniqid,
-        },
-        sender: {
-          uniqid: sender.uniqid,
-          content: comment.commentBar,
-          name: sender.name,
-        },
-        poster: {
-          uniqid: post.poster,
-          post: post.uniqid,
-        },
-      };
+    const commentObj = {
+      sender: {
+        content: comment ? comment.commentBar : post.commentBar,
+        name: sender.name,
+      },
+    };
 
-      try {
-        const response = await api.post('/comment/reply', commentObj);
+    try {
+      const response = comment
+        ? await api.post(`/comment/${post.uniqid}/${comment.uniqid}/`, commentObj)
+        : await api.post(`/comment/${post.uniqid}/`, commentObj);
 
-        return response.data;
-      } catch (err) {
-        return err;
-      }
-    } else {
-      const commentObj = {
-        sender: {
-          uniqid: sender.uniqid,
-          content: post.commentBar,
-          name: sender.name,
-        },
-        poster: {
-          uniqid: post.is_share ? post.shareMetadata.user : sender.uniqid,
-          post: post.uniqid,
-        },
-      };
-
-      try {
-        const response = await api.post('/comment/', commentObj);
-
-        return response.data;
-      } catch (err) {
-        return err;
-      }
+      return response.data;
+    } catch (err) {
+      return err;
     }
   };
 
   const sendLike = async (sender, post, comment = null) => {
-    if (comment) {
-      const likeObj = {
-        commentator: {
-          uniqid: comment.user,
-          comment: comment.uniqid,
-        },
-        poster: {
-          uniqid: post.poster,
-          post: post.uniqid,
-        },
-        sender: {
-          name: sender.name,
-        },
-      };
+    const likeObj = {
+      sender: {
+        name: sender.name,
+      },
+    };
 
-      try {
-        const response = await api.post('/like/comment', likeObj);
+    try {
+      const response = comment
+        ? await api.post(`/like/${post.uniqid}/${comment.uniqid}/`, likeObj)
+        : await api.post(`/like/${post.uniqid}/`, likeObj);
 
-        return response.data;
-      } catch (err) {
-        return err;
-      }
-    } else {
-      const likeObj = {
-        poster: {
-          uniqid: post.poster,
-          post: post.uniqid,
-        },
-        sender: {
-          uniqid: sender.uniqid,
-          name: sender.name,
-        },
-      };
-
-      try {
-        const response = await api.post('/like/post', likeObj);
-
-        return response.data;
-      } catch (err) {
-        return err;
-      }
+      return response.data;
+    } catch (err) {
+      return err;
     }
   };
 
@@ -206,7 +150,7 @@ const Feed = ({ setPosts, posts }) => {
     if (!publishText) { return; }
 
     try {
-      const response = await api.post('/publish', { content: publishContent, uniqid, name });
+      const response = await api.post('/publish/', { content: publishContent, name });
 
       setPosts([
         ...posts,
@@ -407,30 +351,21 @@ const Feed = ({ setPosts, posts }) => {
 
   const handleCreateShare = async (post, content) => {
     const shareObj = {
-      poster: {
-        uniqid: post.poster,
-        name: post.name,
-        post: post.uniqid,
-      },
       sender: {
-        uniqid,
         name,
         content,
       },
     };
 
     try {
-      const response = await api.post('/share', shareObj);
+      const response = await api.post(`/share/${post.uniqid}/`, shareObj);
 
-      setPosts([...posts, {
-        ...getStructedPost(response.data.share),
-        original: response.data.original,
-      }]
+      setPosts([...posts, response.data]
         .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
 
       setShowSnackBar('share');
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -449,13 +384,21 @@ const Feed = ({ setPosts, posts }) => {
     const body = {
       post: {
         content,
-        uniqid: targetPost.uniqid,
       },
     };
 
-    const response = await api.patch('/publish/', body);
+    const response = await api.patch(`/publish/${targetPost.uniqid}/`, body);
 
-    const [noTargetPosts] = getNoTargets(targetPost.uniqid);
+    let [noTargetPosts] = getNoTargets(targetPost.uniqid);
+
+    noTargetPosts = noTargetPosts.map((post) => {
+      if (post.is_share) {
+        return post.original.uniqid === targetPost.uniqid
+          ? { ...post, original: { ...post.original, content } }
+          : post;
+      }
+      return post;
+    });
 
     setPosts([...noTargetPosts, getStructedPost(response.data)]
       .sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
@@ -467,7 +410,7 @@ const Feed = ({ setPosts, posts }) => {
     );
 
     if (targetReply) {
-      await api.delete(`/comment/${targetReply.uniqid}/`);
+      await api.delete(`/comment/${targetPost.uniqid}/${targetReply.uniqid}/`);
 
       const noTargetReplies = targetComment.replies.filter(
         (reply) => reply.uniqid !== targetReply.uniqid,
@@ -487,7 +430,7 @@ const Feed = ({ setPosts, posts }) => {
         comments,
       }].sort((postA, postB) => (postA.created_at < postB.created_at ? 1 : -1)));
     } else {
-      await api.delete(`/comment/${targetComment.uniqid}/`);
+      await api.delete(`/comment/${targetPost.uniqid}/${targetComment.uniqid}/`);
 
       const comments = noTargetComments
         .sort((commentA, commentB) => (commentA.created_at < commentB.created_at ? 1 : -1));
@@ -502,15 +445,11 @@ const Feed = ({ setPosts, posts }) => {
   const handleUpdateComment = async (content, targetPost, targetComment, targetReply = null) => {
     const body = {
       comment: {
-        uniqid: targetReply ? targetReply.uniqid : targetComment.uniqid,
         content,
-      },
-      post: {
-        uniqid: targetPost.uniqid,
       },
     };
 
-    const response = await api.patch('/comment/', body);
+    const response = await api.patch(`/comment/${targetPost.uniqid}/${targetReply ? targetReply.uniqid : targetComment.uniqid}`, body);
 
     if (targetReply) {
       const [noTargetPosts, noTargetComments] = getNoTargets(
