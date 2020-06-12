@@ -21,11 +21,14 @@ exports.post = async (req, res, next) => {
 		if (!req.params.comment) {
 
 			// SAVE COMMENT
-			let account = await Account.findOneAndUpdate({ uniqid: poster.uniqid, "posts.uniqid": req.params.post }, { $push: { "posts.$.comments": comment } }, { new: true, setDefaultsOnInsert: true, lean: true });
+			let account = await Account.findOneAndUpdate({ uniqid: poster.uniqid, "posts.uniqid": req.params.post }, { $push: { "posts.$.comments": comment } }, { runValidators: true, new: true, setDefaultsOnInsert: true, lean: true });
 			if (!account) return res.status(422).send({ message: { comment: "Cannot comment in this post" } });
 
-			let postIndex = getIndexByUniqid(account.posts, req.params.post);
-			let commentIndex = getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
+			// INDEX NOT WORKING
+			// let postIndex = getIndexByUniqid(account.posts, req.params.post);
+			let postIndex = await Account.getIndex("posts", { post: req.params.post });
+			// let commentIndex = getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
+			let commentIndex = await Account.getIndex("comments", { post: req.params.post, comment: comment.uniqid });
 
 			return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 
@@ -58,11 +61,14 @@ exports.post = async (req, res, next) => {
 			comment.replyMetadata = replyMetadata;
 
 			// SAVE REPLY
-			let account = await Account.findOneAndUpdate({ uniqid: poster.uniqid, "posts.uniqid": req.params.post }, { $push: { "posts.$.comments": comment } }, { new: true, setDefaultsOnInsert: true, lean: true });
+			let account = await Account.findOneAndUpdate({ uniqid: poster.uniqid, "posts.uniqid": req.params.post }, { $push: { "posts.$.comments": comment } }, { runValidators: true, new: true, setDefaultsOnInsert: true, lean: true });
 			if (!account) return res.status(422).send({ message: { comment: "Cannot reply this comment" } });
 
-			let postIndex = getIndexByUniqid(account.posts, req.params.post);
-			let commentIndex = getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
+			// INDEX NOT WORKING
+			// let postIndex = getIndexByUniqid(account.posts, req.params.post);
+			let postIndex = await Account.getIndex("posts", { post: req.params.post });
+			// let commentIndex = getIndexByUniqid(account.posts[postIndex].comments, comment.uniqid);
+			let commentIndex = await Account.getIndex("comments", { post: req.params.post, comment: comment.uniqid });
 
 			return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 
@@ -93,8 +99,10 @@ exports.patch = async (req, res, next) => {
 		let post = commentator.map(commentator => commentator.posts)[0];
 		let posterUniqid = commentator[0].uniqid;
 
+		// INDEX NOT WORKING
 		// BUILD QUERY
-		let commentIndex = getIndexByUniqid(post.comments, req.params.comment);
+		// let commentIndex = getIndexByUniqid(post.comments, req.params.comment);
+		let commentIndex = await Account.getIndex("comments", { post: req.params.post, comment: req.params.comment });
 		let postIndex = "$";
 
 		let queryContent = `posts.${postIndex}.comments.${commentIndex}.content`;
@@ -108,11 +116,14 @@ exports.patch = async (req, res, next) => {
 		}
 
 		// UPDATE COMMENT
-		let account = await Account.findOneAndUpdate({uniqid: posterUniqid, "posts.uniqid": req.params.post}, {$set: {[queryContent]: req.body.comment.content}, $push: {[queryHistory]: old_comment}}, {new: true});
+		let account = await Account.findOneAndUpdate({ uniqid: posterUniqid, "posts.uniqid": req.params.post }, { $set: { [queryContent]: req.body.comment.content }, $push: { [queryHistory]: old_comment } }, { runValidators: true, new: true });
 		if (!account) return res.status(422).send({ message: { comment: "Cannot update this comment" } });
 
-		postIndex = getIndexByUniqid(account.posts, req.params.post);
-		commentIndex = getIndexByUniqid(account.posts[postIndex].comments, req.params.comment);
+		// INDEX NOT WORKING
+		// postIndex = getIndexByUniqid(account.posts, req.params.post);
+		postIndex = await Account.getIndex("posts", { post: req.params.post });
+		// commentIndex = getIndexByUniqid(account.posts[postIndex].comments, req.params.comment);
+		commentIndex = await Account.getIndex("comments", { post: req.params.post, comment: req.params.comment });
 
 		return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 
@@ -149,7 +160,7 @@ exports.delete = async(req, res, next) => {
 		let query = { [queryProperty]: { uniqid: req.params.comment } };
 
 		// DELETE COMMENT
-		let comment = await Account.findOneAndUpdate({ uniqid: posterUniqid, "posts.uniqid": req.params.post }, { $pull: query }, { new: true, lean: true });
+		let comment = await Account.findOneAndUpdate({ uniqid: posterUniqid, "posts.uniqid": req.params.post }, { $pull: query }, { runValidators: true, new: true, lean: true });
 		if (!comment) return res.status(400).send({ message: { comment: "Cannot delete this comment" } });
 
 		return res.status(204).send();

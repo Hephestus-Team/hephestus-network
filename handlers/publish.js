@@ -5,17 +5,18 @@ exports.post = async (req, res, next) => {
 	// BUILD THE POST OBJECT
 	let post = {
 		uniqid: Account.setUniqid("post"),
-		content: req.body.content,
-		name: req.body.name
+		content: req.body.content
 	};
 
 	try {
 
 		// SAVE POST
-		let poster = await Account.findOneAndUpdate({ uniqid: req.header("u") }, { $push: { posts: post } }, { lean: true, new: true, setDefaultsOnInsert: true });
+		let poster = await Account.findOneAndUpdate({ uniqid: req.header("u") }, { $push: { posts: post } }, { runValidators: true, lean: true, new: true, setDefaultsOnInsert: true });
 		if (!poster) return res.status(422).send({ message: { publish: "Cannot publish this post" } });
 
-		let postIndex = getIndexByUniqid(poster.posts, post.uniqid);
+		// INDEX NOT WORKING
+		// let postIndex = getIndexByUniqid(poster.posts, post.uniqid);
+		let postIndex = await Account.getIndex("posts", { post: post.uniqid });
 		poster.posts[postIndex].poster = req.header("u");
 	
 		return res.status(200).send(poster.posts[postIndex]);
@@ -102,10 +103,12 @@ exports.patch = async (req, res, next) => {
 		}
 
 		// UPDATE POST
-		let account = await Account.findOneAndUpdate({ uniqid: req.header("u"), "posts.uniqid": req.params.uniqid }, { $set: { "posts.$.content": req.body.post.content }, $push: { "posts.$.history": old_post } }, { new: true, lean: true });
+		let account = await Account.findOneAndUpdate({ uniqid: req.header("u"), "posts.uniqid": req.params.uniqid }, { $set: { "posts.$.content": req.body.post.content }, $push: { "posts.$.history": old_post } }, { runValidators: true, new: true, lean: true });
 		if (!account) return res.status(422).send({ message: { post: "Cannot update this post" } });
 
-		let postIndex = getIndexByUniqid(account.posts, req.params.uniqid);
+		// INDEX NOT WORKING
+		// let postIndex = getIndexByUniqid(account.posts, req.params.uniqid);
+		let postIndex = await Account.getIndex("posts", { post: req.params.uniqid });
 		
 		return res.status(200).send(account.posts[postIndex]);
 
@@ -121,7 +124,7 @@ exports.delete = async (req, res, next) => {
 		if (!poster) return res.status(403).send({ message: { post: "This post does not exists" } });
 
 		// DELETE POST
-		let account = await Account.findOneAndUpdate({ uniqid: req.header("u"), "posts.uniqid": req.params.uniqid }, { $pull: { "posts": { "uniqid": req.params.uniqid } } }, { lean: true });
+		let account = await Account.findOneAndUpdate({ uniqid: req.header("u"), "posts.uniqid": req.params.uniqid }, { $pull: { "posts": { "uniqid": req.params.uniqid } } }, { runValidators: true, lean: true });
 		if (!account) return res.status(422).send({ message: { delete: "Cannot perform this action" } });
 
 		return res.status(204).send({});

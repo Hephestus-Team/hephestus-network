@@ -6,9 +6,9 @@ exports.post = async (req, res, next) => {
 		let referrer = await Account.findOne({"posts.uniqid": req.params.uniqid }, { _id: 0, uniqid: 1, name: 1, posts: 1, first_name: 1, last_name: 1 }, { lean: true });
 		if (!referrer) return res.status(404).send({ message: { post: "This post does not exists" } });
 
-		// console.log(referrer);
-
-		let referrerPostIndex = getIndexByUniqid(referrer.posts, req.params.uniqid);
+		// INDEX NOT WORKING
+		// let referrerPostIndex = getIndexByUniqid(referrer.posts, req.params.uniqid);
+		let referrerPostIndex = await Account.getIndex("posts", { post: req.params.uniqid });
 		let referrerPost = referrer.posts[referrerPostIndex];
 
 		// BUILD SHAREMETADATA & QUERY OBJ
@@ -46,19 +46,23 @@ exports.post = async (req, res, next) => {
 		};
 
 		// SAVE SHARE IN ORIGINAL SHARES ARRAY
-		let original = await Account.findOneAndUpdate(query, { $push: { "posts.$.shares": shareObj } }, { new: true, setDefaultsOnInsert: true });
+		let original = await Account.findOneAndUpdate(query, { $push: { "posts.$.shares": shareObj } }, { runValidators: true, new: true, setDefaultsOnInsert: true });
 		if (!original) return res.status(422).send({ message: { share: "Cannot share this post" } });
 
 		// SAVE SHARED POST
-		let share = await Account.findOneAndUpdate({ uniqid: req.header("u") }, { $push: { "posts": postObj } }, { lean: true, new: true, setDefaultsOnInsert: true });
+		let share = await Account.findOneAndUpdate({ uniqid: req.header("u") }, { $push: { "posts": postObj } }, { runValidators: true, lean: true, new: true, setDefaultsOnInsert: true });
 		if (!share) return res.status(422).send({ message: { share: "Cannot share this post" } });
 
+		// INDEX NOT WORKING
 		// GET ORIGINAL OBJ
-		let originalIndex = getIndexByUniqid(original.posts, req.params.uniqid);
+		// let originalIndex = getIndexByUniqid(original.posts, req.params.uniqid);
+		let originalIndex = await Account.getIndex("posts", { post: req.params.uniqid });
 		original = original.posts[originalIndex];
 
+		// INDEX NOT WORKING
 		// GET SHARE OBJ AND SET POSTER
-		let shareIndex = getIndexByUniqid(share.posts, postObj.uniqid);
+		// let shareIndex = getIndexByUniqid(share.posts, postObj.uniqid);
+		let shareIndex = await Account.getIndex("posts", { post: postObj.uniqid });
 		share.posts[shareIndex].poster = req.header("u");
 
 		share = share.posts[shareIndex];

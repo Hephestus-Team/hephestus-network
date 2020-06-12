@@ -1,61 +1,107 @@
 const mongoose = require("mongoose");
 
+// METADATA
+let shareMetadataSchema = new mongoose.Schema({
+	user: String,
+	name: String,
+	post: String
+}, { _id: false });
+
+let replyMetadataSchema = new mongoose.Schema({
+	user: String,
+	name: String,
+	comment: String
+}, { _id: false });
+
+// ARRAY DATA
+let shareSchema = new mongoose.Schema({
+	user: String,
+	name: String,
+	post: {
+		type: String,
+		sparse: true,
+		required: true
+	},
+	created_at: { type: Date, default: Date.now }
+}, { _id: false });
+
+let historySchema = new mongoose.Schema({
+	content: String,
+	modified_at: { type: Date }
+}, { _id: false });
+
+// SUBDOCUMENT
 let friendshipSchema = mongoose.Schema({
-		uniqid: String,
-		friend: String,
-		is_accepted: { type: Boolean, default: false },
-		is_sender: Boolean,
-		created_at: { type: Date, default: Date.now }
-	}, { _id: false }),
-	likeSchema = new mongoose.Schema({
-		user: String,
-		name: String,
-		created_at: { type: Date, default: Date.now }
-	}, { _id: false}),
-	shareSchema = new mongoose.Schema({
-		user: String,
-		name: String,
-		post: String,
-		created_at: { type: Date, default: Date.now }
-	}, { _id: false}),
-	shareMetadataSchema = new mongoose.Schema({
-		user: String,
-		name: String,
-		post: String
-	}, { _id: false}),
-	replyMetadataSchema = new mongoose.Schema({
-		user: String,
-		name: String,
-		comment: String
-	}, { _id: false}),
-	historySchema = new mongoose.Schema({
-		content: String,
-		modified_at: { type: Date }
-	}, { _id: false}),
-	commentSchema = new mongoose.Schema({
-		uniqid: String,
-		user: String,
-		name: String,
-		content: String,
-		is_reply: { type: Boolean, default: false },
-		replyMetadata: replyMetadataSchema,
-		likes: [likeSchema],
-		history: [historySchema],
-		created_at: { type: Date, default: Date.now }
-	}, { _id: false }),
-	postSchema = mongoose.Schema({
-		uniqid: String,
-		name: String,
-		content: String,
-		is_share: { type: Boolean, default: false },
-		shares: [shareSchema],
-		shareMetadata: shareMetadataSchema,
-		likes: [likeSchema],
-		comments: [commentSchema],
-		visibility: { type: Number, default: 1},
-		history: [historySchema],
-		created_at: { type: Date, default: Date.now }
-	}, { _id: false });
+	uniqid: {
+		type: String,
+		sparse: true,
+		required: true
+	},
+	friend: {
+		type: String,
+		required: true
+	},
+	is_accepted: { type: Boolean, default: false },
+	is_sender: Boolean,
+	created_at: { type: Date, default: Date.now }
+}, { _id: false });
+
+let likeSchema = new mongoose.Schema({
+	user: {
+		type: String,
+		sparse: true,
+		required: true
+	},
+	name: String,
+	created_at: { type: Date, default: Date.now }
+}, { _id: false });
+
+let commentSchema = new mongoose.Schema({
+	uniqid: {
+		type: String,
+		required: true,
+		sparse: true
+	},
+	user: {
+		type: String,
+		required: true,
+		sparse: true
+	},
+	name: {
+		type: String
+	},
+	content: {
+		type: String,
+		required: true,
+		maxlength: 280
+	},
+	is_reply: { type: Boolean, default: false },
+	replyMetadata: replyMetadataSchema,
+	likes: [likeSchema],
+	history: [historySchema],
+	created_at: { type: Date, default: Date.now }
+}, { _id: false });
+
+let postSchema = mongoose.Schema({
+	uniqid: {
+		type: String,
+		required: true,
+		sparse: true,
+	},
+	content: {
+		type: String,
+		required: true,
+		maxlength: 280
+	},
+	is_share: { type: Boolean, default: false },
+	shares: [shareSchema],
+	shareMetadata: shareMetadataSchema,
+	likes: [likeSchema],
+	comments: [commentSchema],
+	visibility: { type: Number, default: 1 },
+	history: [historySchema],
+	created_at: { type: Date, default: Date.now }
+}, { _id: false });
 
 /*
  *  Visibility code:

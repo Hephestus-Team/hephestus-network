@@ -55,13 +55,15 @@ exports.patch = async (req, res, next) => {
 		let receiver = await Account.findOne({ uniqid: req.header("u"), "friendships.uniqid": req.params.uniqid, "friendships.is_sender": false}, { _id: 0, friendships: 1 }, { lean: true });
 		if (!receiver) return res.status(404).send({ message: { request: "This request does not exists" } });
 
+		// INDEX NOT WORKING
 		// GET FRIENDSHIP INDEX AND BUILD QUERY
-		let requestIndex = getIndexByUniqid(receiver.friendships, req.params.uniqid);
+		// let requestIndex = getIndexByUniqid(receiver.friendships, req.params.uniqid);
+		let requestIndex = await Account.getIndex("friendship", { post: null, comment: null, user: req.header("u"), friendship: req.params.uniqid });
 		let querySet = { [`friendships.${requestIndex}.is_accepted`]: true };
 		let queryUnset = { [`friendships.${requestIndex}.is_sender`]: "" };
 
 		// UPDATE REQUEST
-		let request = await Account.updateMany({ "friendships.uniqid": req.params.uniqid }, { $set: querySet, $unset: queryUnset }, { new: true, lean: true });
+		let request = await Account.updateMany({ "friendships.uniqid": req.params.uniqid }, { $set: querySet, $unset: queryUnset }, { runValidators: true, new: true, lean: true });
 		if (!request) return res.status(422).send({ message: { friendship: "Cannot accept this friendship request" } });
 
 		return res.status(201).send({ message: { friendship: "Now you are friends" } });
@@ -78,7 +80,7 @@ exports.delete = async (req, res, next) => {
 		if (!request) return res.status(404).send({ message: { request: "This request does not exists" } });
 
 		// UPDATE REQUEST
-		request = await Account.updateMany({ "friendships.uniqid": req.params.uniqid }, { $pull: { "friendships": { "uniqid": req.params.uniqid } } }, { lean: true, new: true });
+		request = await Account.updateMany({ "friendships.uniqid": req.params.uniqid }, { $pull: { "friendships": { "uniqid": req.params.uniqid } } }, { runValidators: true, lean: true, new: true });
 		if (!request) return res.status(422).send({ message: { friendship: "Cannot refuse this friendship request" } });
 
 		return res.status(204).send();

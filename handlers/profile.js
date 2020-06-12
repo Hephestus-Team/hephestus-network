@@ -6,10 +6,7 @@ exports.get = async (req, res, next) => {
 		let profile = await Account.findOne({ uniqid: req.params.uniqid }, { _id: 0, uniqid: 1 }, { lean: true });
 		if (!profile) return res.status(404).send({ message: { profile: "This profile do not exists" } });
 
-		// BUILD QUERY AND GET THE PROFILE PARSED OBJ
-		let query = { uniqid: req.params.uniqid };
-
-		profile = await Account.getProfile(query, req.header("u"));
+		profile = await Account.getProfile(req.params.uniqid, req.header("u"), );
 
 		return res.status(200).send(profile);
 		
@@ -45,7 +42,7 @@ exports.patch = async (req, res, next) => {
 	try {
 		
 		// SAVE PROFILE
-		let profile = await Account.findOneAndUpdate({uniqid: req.header("u")}, req.body.user, {new: true, lean: true});
+		let profile = await Account.findOneAndUpdate({ uniqid: req.header("u") }, req.body.user, { runValidators: true, new: true, lean: true });
 		if (!profile) return res.status(422).send({ message: { profile: "Cannot save your profile changes" } });
 
 		return res.status(201).send({ message: { profile: "Saved" } });

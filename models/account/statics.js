@@ -26,7 +26,7 @@ module.exports = {
 		let name = await this.findOne({ uniqid: uniqid }, { _id: 0, first_name: 1, last_name: 1 });
 		return `${name.first_name} ${name.last_name}`;
 	},
-	getRelationship: async function getRelationship(userUniqid, profileUniqid){
+	getRelationship: async function (userUniqid, profileUniqid){
 		let profile;
     
 		try{
@@ -41,39 +41,39 @@ module.exports = {
 		//IF PROFILE IS PUBLIC, PROFILEISPUBLIC == TRUE
 		let profileIsPublic = Boolean(profile.visibility === 1);
     
-		//IF SELF PROFILE, RELATIONSHIP == 4
+		//IF SELF PROFILE, THE USER CAN VIEW ALL POSTS [1,2,3,4]
 		let selfProfile = Boolean(userUniqid === profileUniqid);
     
-		if (selfProfile) return { profileIsPublic, relationship: 4 };
+		if (selfProfile) return { profileIsPublic, relationship: [1, 2, 3, 4] };
     
-		//IF FRIEND, RELATIONSHIP == 2
-		let friendships = profile.friendships;
-		let friendshipsUniqid = friendships.forEach(friendship => friendship.uniqid);
-        
-		let isFriend = friendships.some(friendship => (friendship.friend === userUniqid && friendship.is_accepted === true));
+		//IF FRIEND, THE USER CAN VIEW SOME POSTS [1,2,3]
+		let isFriend;
+
+		try {
+
+			isFriend = await this.findOne({ uniqid: profileUniqid, $and: [{ "friendships.friend": userUniqid }, { "friendships.is_accepted": true }] }, { lean: true });
+		
+		} catch (err) {
+			return console.log(err);
+		}
+            
+		if (isFriend) return { profileIsPublic, relationship: [1, 2, 3] };
     
-		if(isFriend) return { profileIsPublic, relationship: 2 };
-    
-		//IF FRIEND OF A FRIEND, RELATIONSHIP == 3
-		let friendsProfile;
+		//IF FRIEND OF A FRIEND, THE USER CAN VIEW ONLY [1,3]
+		let hasMutualFriend;
     
 		try{
-            
-			friendsProfile = await this.findOne({uniqid: {$in: friendshipsUniqid}, "friendships.friend": userUniqid}, {_id: 0, friendships: 1}, { lean: true });
-            
-			//IF PROFILE DONT HAVE FRIENDS, RELATIONSHIP == 1
-			if(!friendsProfile) return { profileIsPublic, relationship: 1 };
-    
+
+			hasMutualFriend = await this.findOne({$and: [{$and: [{ "friendships.friend": userUniqid }, { "friendships.is_accepted": true }]}, {$and: [{ "friendships.friend": profileUniqid }, { "friendships.is_accepted": true }]}]}, {lean: true});
+
 		}catch(err){
-			throw new Error(err);
+			return console.log(err);
 		}
     
-		let isMutualFriend = friendsProfile.length;
+		if(hasMutualFriend) return { profileIsPublic, relationship: [1,3] };
     
-		if(isMutualFriend) return { profileIsPublic, relationship: 3 };
-    
-		//IF ISNT FRIEND NOR MUTUAL FRIEND, RELATIONSHIP == 1
-		return { profileIsPublic, relationship: 1 };
+		//IF ISNT FRIEND NOR MUTUAL FRIEND, CAN ONLY VIEW [1]
+		return { profileIsPublic, relationship: [1] };
     
 	},
 	getOriginalPost: async function(shareUniqid){
@@ -89,7 +89,7 @@ module.exports = {
 				}
 			};
 	
-			// FIND ORIGINAL'S USER POST
+			// FIND ORIGINAL"S USER POST
 			let original = await this.aggregate([{ $unwind: "$posts" }, { $match: {"posts.shares.post": shareUniqid} }, projection]);
 			if (original.length === 0) return null;
 	
@@ -110,115 +110,189 @@ module.exports = {
 			return console.log(err);
 		}
 	},
-	// PROFILE
-	parseFriendships: async function (profileUniqid) {
+	getIndex: async function(type, { post, comment, user, friendship }){
 		try {
-			// PARSE FRIENDSHIPS
-			let profile = await this.findOne({ uniqid: profileUniqid }, { _id: 0, friendships: 1 }, { lean: true });
+			// BUILD PIPELINES
+			let pipelines = {
+				"posts": [{
+					$match: { "posts.uniqid": post }
+				}, {
+					$project: { _id: 0, index: { $indexOfArray: ["$posts.uniqid", post] } }
+				}],
+				"posts/likes": [{
+					$match: { "posts.uniqid": post }
+				}, {
+					$unwind: { path: "$posts" }
+				}, {
+					$match: { "posts.uniqid": post }
+				}, {
+					$project: { index: { $indexOfArray: ["$posts.likes.user", user] } }
+				}],
+				"comments": [{
+					$match: { "posts.uniqid": post }
+				}, {
+					$unwind: { path: "$posts" }
+				}, {
+					$match: { "posts.comments.uniqid": comment }
+				}, {
+					$project: { index: { $indexOfArray: ["$posts.comments.uniqid", comment] } }
+				}],
+				"comments/likes": [{
+					$match: { "posts.uniqid": post }
+				}, {
+					$unwind: { path: "$posts" }
+				}, {
+					$match: { "posts.comments.uniqid": comment }
+				}, {
+					$unwind: { path: "$posts.comments" }
+				}, {
+					$match: { "posts.comments.uniqid": comment }
+				}, {
+					$project: { _id: 0, index: { "$indexOfArray": ["$posts.comments.likes.user", user] } }
+				}],
+				"friendships": [{
+					$match: { uniqid: user }
+				}, {
+					$project: { _id: 0, index: { $indexOfArray: ["$friendships.uniqid", friendship] } }
+				}]
+			};
 	
-			let friendshipsUniqid = profile.friendships.map(friendship => friendship.friend);
+			let { index } = (await this.aggregate(pipelines[type]))[0];
 	
-			// GET ALL FRIENDS DOCUMENT AND PARSE DATA
-			let friendships = await this.find({ uniqid: { $in: friendshipsUniqid } }, { _id: 0, first_name: 1, last_name: 1, uniqid: 1 }, { lean: true });
-	
-			let friends = [];
-	
-			friendships.forEach(friend => {
-				friends.push({
-					uniqid: friend.uniqid,
-					name: `${friend.first_name} ${friend.last_name}`
-				});
-			});
-	
-			return friends;
-	
+			return console.log(index);
 		} catch (err) {
-			console.log(err);
+			return console.log(err);
 		}
 	},
-	parsePosts: async function (profileUniqid, userUniqid, { profileIsPublic, relationship } = relationship) {
+	// PROFILE
+	parseFriendships: async function (profileUniqid, limit) {
 		try {
-			// BUILD QUERY AND SET RELATIONSHIP
-			let query = { uniqid: profileUniqid };
-
-			if (!profileIsPublic && relationship !== 4) { query["posts.visibility"] = relationship; }
-	
-			let projection = {
+			// BUILD FRIENDSHIP OBJ
+			let pipelines = [{
+				$match: { uniqid: profileUniqid }
+			}, {
 				$project: {
-					"posts.uniqid": 1,
-					"posts.content": 1,
-					"posts.original": {
-						$cond: { if: { $eq: ["$posts.is_share", true] }, then: "$posts.shareMetadata.post", else: false }
-					},
-					"posts.created_at": 1,
-					"posts.visibility": 1,
-					"posts.is_share": 1,
-					"posts.name": 1,
-					"posts.shares": 1,
-					"posts.likes": 1,
-					"posts.comments": 1,
-					"posts.is_liked": {
-						$cond: { if: { $eq: ["$posts.likes.user", userUniqid] }, then: true, else: false }
-					},
-					"posts.poster": profileUniqid,
-					_id: 0
+					_id: 0,
+					friendships: { $slice: [{ $filter: { input: "$friendships", as: "friendship", cond: { $eq: ["$$friendship.is_accepted", true] } } }, limit] }
 				}
-			};
-	
-			// GET POSTS UNIQID
-			let profile = await this.aggregate([{$unwind: "$posts"}, { $match: query }, projection, { $sort: { "posts.original": 1 } }]);
-			if (profile.length === 0) { return []; }
-
-			// PARSE AGGREGATE ARRAY AND CHECK IF HAS POSTS
-			let posts = profile.map(account => account.posts);
-
-			if(!posts) return [];
-	
-			// CHECK IF HAS SHARES
-			let shares = posts.filter(post => post.is_share);
-	
-			if(shares.length === 0) return posts;
-	
-			// GET ALL POSTS THAT IS NOT A SHARE
-			posts = posts.filter(post => !post.is_share);
-	
-			// GET ORIGINAL POSTS' UNIQID AND BUILD QUERY
-			let originalsUniqid = shares.map(share => share.original);
-			query = { "posts.uniqid": { $in: originalsUniqid } };
-	
-			projection = {
+			}, {
+				$unwind: {
+					path: "$friendships"
+				}
+			}, {
 				$project: {
-					"posts.uniqid": 1,
-					"posts.content": 1,
-					"posts.name": 1,
-					_id: 0
+					uniqid: "$friendships.uniqid",
+					friend: "$friendships.friend"
 				}
-			};
-	
-			// GET ORIGINAL POSTS
-			let originals = await this.aggregate([{$unwind: "$posts" }, {$match: query}, projection, {$sort: { "posts.uniqid": 1 }}]);
-			console.log(query);
-			// PARSE AGGREGATE ARRAY
-			originals = originals.map(original => original.posts);
-			
-			// SET SHARES' ORIGINAL OBJ WITH MATCHING ORIGINAL POST
-			shares.forEach(share => {
-				let original = originals.find(original => original.uniqid == share.original);
-				delete share.original;
-	
-				share.original = (original !== undefined) ? original : false;
+			}, {
+				$group: {
+					_id: "",
+					friendship: { "$push": { uniqid: "$uniqid", friend: "$friend" } },
+					friendsUniqid: { "$push": "$friend" }
+				}
+			}];
+
+			let friendship = await this.aggregate(pipelines);
+			let friendsUniqid = friendship[0].friendsUniqid;
+			friendship = friendship[0].friendship;
+
+			// GET NAMES
+			pipelines = [{
+				$match: { uniqid: { $in: friendsUniqid } }
+			}, {
+				$project: {
+					_id: 0,
+					uniqid: 1,
+					name: { $concat: ["$first_name", " ", "$last_name"] }
+				}
+			}];
+
+			let names = await this.aggregate(pipelines);
+
+			friendship.forEach(friendship => {
+				friendship.name = names.find(friend => friend.uniqid === friendship.friend).name;
 			});
-	
-			// CONCAT NEW SHARES ARRAY WITH POSTS ARRAY
-			posts = posts.concat(shares);
+
+			return friendship;
+		} catch (err) {
+			return console.log(err);
+		}
+	},
+	parsePosts: async function (profileUniqid, userUniqid, relationship, limit) {
+		try {
+			// BUILD PIPELINES
+			let pipelines = [{
+				$match: { uniqid: profileUniqid }
+			}, {
+				$project: {
+					_id: 0,
+					first_name: 1,
+					last_name: 1,
+					uniqid: 1,
+					posts: {
+						$slice: [{ $filter: { input: "$posts", as: "post", cond: { $in: ["$$post.visibility", relationship] } } }, limit]
+					}
+				}
+			}, {
+				$unwind: { path: "$posts" }
+			}, {
+				$addFields: {
+					"posts.is_liked": { $cond: { if: { $in: [userUniqid, "$posts.likes.user"] }, then: true, else: false } },
+					"posts.name": {$concat: ["$first_name", " ", "$last_name"]},
+					"posts.poster": "$uniqid",
+					"posts.original": {$cond: {if: {$eq: ["$posts.is_share", true]}, then: "$posts.shareMetadata.post", else: null}}
+				}
+			}, {
+				$sort: { "posts.is_share": -1 }
+			}, {
+				$group: { _id: { is_share: "$posts.is_share" }, posts: { $push: "$posts" } }
+			}];
 			
-			return posts;
+			// POSTS[0] == SHARED POSTS, POSTS[1] == PROFILE ORIGINAL POSTS
+			let posts = await this.aggregate(pipelines);
+			if(posts.length === 0) return [];
+			
+			// BUILD PIPELINES
+			pipelines = [{
+				$match: { "posts.is_share": true }
+			}, {
+				$project: {
+					_id: 0,
+					name: { $concat: ["$first_name", " ", "$last_name"] },
+					uniqid: 1,
+					posts: { $filter: { input: "$posts", as: "post", cond: { $in: [profileUniqid, "$$post.shares.user"] } } }
+				}
+			}, {
+				$unwind: { path: "$posts" }
+			}, {
+				$project: {
+					name: 1,
+					user: "$uniqid",
+					content: "$posts.content",
+					uniqid: "$posts.uniqid",
+					created_at: "$posts.created_at"
+				}
+			}];
+			
+			// GET ORIGINALS
+			let originals = await this.aggregate(pipelines);
+			if(originals.length === 0) return posts[0].posts.concat(posts[1].posts);
+						
+			// SET ORIGINALS IN SHARES
+			posts[0].posts.forEach(post => {
+				post.original = originals.find(original => original.uniqid === post.original);
+			});
+			
+			// PARSE POSTS
+			let parsedPosts = posts[0].posts.concat(posts[1].posts);
+			
+			return parsedPosts;
 	
 		} catch (err) {
 			return console.log(err);
 		}
 	},
-	getProfile: async function (query, userUniqid) {
+	getProfile: async function (profileUniqid, userUniqid, {friendshipLimit, postsLimit}) {
 		try {
 
 			let projection = {
@@ -229,28 +303,36 @@ module.exports = {
 				created_at: 0
 			};
 	
-			// GET PROFILE DOCUMENT AND STORE FRIENDSHIPS & POSTS IN VARIABLES
-			let profile = await this.findOne(query, projection, { lean: true });
+			// GET PROFILE DOCUMENT
+			let profile = await this.findOne({uniqid: profileUniqid}, projection, { lean: true });
+
+			// GET RELATIONSHIP
+			let { profileIsPublic, relationship } = await this.getRelationship(profileUniqid, userUniqid);
 			
-			let posts = profile.posts;
-			let friendships = profile.friendships;
-	
-			delete profile.posts, profile.friendships;
-	
-			// GET RELATIONSHIP USER/PROFILE
-			let { profileIsPublic, relationship } = await this.getRelationship(userUniqid, profile.uniqid);
-	
-			profile.isFriend = Boolean(relationship === 2);
-			profile.selfProfile = Boolean(relationship === 4);
-	
-			// CHECK IF HAS A PENDING REQUEST
-			profile.hasPendingRequest = friendships.some(friendship => (friendship.is_accepted === false && friendship.friend === userUniqid && friendship.is_sender === false));
-	
 			// IF HAVE POSTS PARSE POSTS
-			if(posts !== 0) profile.posts = await this.parsePosts(profile.uniqid, userUniqid, {profileIsPublic, relationship});
+			if(profile.posts.length !== 0) profile.posts = await this.parsePosts(profile.uniqid, userUniqid, relationship, postsLimit);
 	
 			// IF HAVE FRIENDSHIPS PARSE FRIENDSHIPS
-			if(friendships !== 0) profile.friendships = await this.parseFriendships(profile.uniqid);
+			if(profile.friendships.length !== 0) profile.friendships = await this.parseFriendships(profile.uniqid, friendshipLimit);
+
+			// SET isFriend, selfProfile and hasPendingRequest
+			let pipelines = [{
+				$match: { "uniqid": "cvwu1z79wkb6mbaec" }
+			}, {
+				$project: {
+					_id: 0, 
+					friendships: {$filter: {input: "$friendships", as: "friendship", cond: {$eq: ["$$friendship.friend", "cvwu1z79wkb6mbb32"]}}}
+				}
+			}, {
+				$unwind: {path: "$friendships"}
+			}];
+
+			let friendshipRequest = await this.aggregate(pipelines);
+			friendshipRequest = friendshipRequest[0].friendships;
+
+			profile.isFriend = friendshipRequest.is_accepted;
+			profile.selfProfile = Boolean(profileUniqid === userUniqid);
+			profile.hasPendingRequest = Boolean(friendshipRequest.is_accepted === false && friendshipRequest.is_sender === false);
 	
 			return profile;
 	

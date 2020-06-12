@@ -2,12 +2,14 @@ let Account = require("../models/account"), { getIndexByUniqid } = require("../l
 
 exports.post = async (req, res, next) => {
 	try {
-		// FIND POST
-		let poster = await Account.findOne({ "posts.uniqid": req.params.post }, { _id: 0, uniqid: 1, posts: 1 }, { lean: true });
+		// FIND POSTER
+		let poster = await Account.findOne({ "posts.uniqid": req.params.post }, { _id: 0, uniqid: 1 }, { lean: true });
 		if (!poster) return res.status(404).send({ message: { post: "This post does not exists" } });
 
+		// INDEX NOT WORKING
 		// BUILD THE LIKE OBJECT AND GET THE POST INDEX
-		let postIndex = getIndexByUniqid(poster.posts, req.params.post);
+		// let postIndex = getIndexByUniqid(poster.posts, req.params.post);
+		let postIndex = await Account.getIndex("posts", { post: req.params.post });
 
 		let like = {
 			user: req.header("u"),
@@ -36,7 +38,7 @@ exports.post = async (req, res, next) => {
 			};
 
 			// SAVE LIKE AND GET POST OBJ
-			poster = await Account.findOneAndUpdate(query, { $push: { "posts.$.likes": like} }, { new: true, setDefaultsOnInsert: true, lean: true });
+			poster = await Account.findOneAndUpdate(query, { $push: { "posts.$.likes": like } }, { runValidators: true, new: true, setDefaultsOnInsert: true, lean: true });
 			if (!poster) return res.status(422).send({ message: { post: "Cannot like this post" } });
 			
 			let post = poster.posts[postIndex];
@@ -47,9 +49,10 @@ exports.post = async (req, res, next) => {
 			return res.status(200).send(post);
 			
 		}else{
-
+			// INDEX NOT WORKING
 			// FIND COMMENT AND GET THE COMMENT INDEX
-			let commentIndex = getIndexByUniqid(poster.posts[postIndex].comments, req.params.comment);
+			// let commentIndex = getIndexByUniqid(poster.posts[postIndex].comments, req.params.comment);
+			let commentIndex = await Account.getIndex("comments", { post: req.params.post, comment: req.params.comment });
 			if(commentIndex === -1) return res.status(404).send({ message: { comment: "This comment does not exists" } });
 
 			// BUILD THE QUERY TO FIND IF THE USER ALREADY LIKED THE COMMENT
@@ -81,7 +84,7 @@ exports.post = async (req, res, next) => {
 			};
 
 			// SAVE LIKE AND FIND THE COMMENT OBJECT
-			poster = await Account.findOneAndUpdate(query, { $push: pushQuery }, { new: true, setDefaultsOnInsert: true, lean: true });
+			poster = await Account.findOneAndUpdate(query, { $push: pushQuery }, { runValidators: true, new: true, setDefaultsOnInsert: true, lean: true });
 			if (!poster) return res.status(422).send({ message: { comment: "Cannot like this comment" } });
  
 			let comment = poster.posts[postIndex].comments[commentIndex];
@@ -99,13 +102,17 @@ exports.delete = async (req, res, next) => {
 		let poster = await Account.findOne({ "posts.uniqid": req.params.post }, { _id: 0, posts: 1 }, { lean: true });
 		if (!poster) return res.status(404).send({ message: { post: "This post does not exists" } });
 
+		// INDEX NOT WORKING
 		// GET POST INDEX, AND BUILD QUERY
-		let postIndex = getIndexByUniqid(poster.posts, req.params.post), query;
+		// let postIndex = getIndexByUniqid(poster.posts, req.params.post), query;
+		let postIndex = await Account.getIndex("posts", { post: req.params.post }), query;
 
+		// INDEX NOT WORKING
 		// CHECK IF IT IS A COMMENT LIKE
 		if (req.params.comment) {
 			// GET COMMENT INDEX IN POSTS
-			let commentIndex = getIndexByUniqid(poster.posts[postIndex].comments, req.params.comment);
+			// let commentIndex = getIndexByUniqid(poster.posts[postIndex].comments, req.params.comment);
+			let commentIndex = await Account.getIndex("comments", { post: req.params.post, comment: req.params.comment });
 
 			// IF NO COMMENT IS FOUND, THEN IT NOT EXISTS
 			if (commentIndex === -1) return res.status(404).send({ message: { comment: "This comment does not exists" } });
@@ -147,7 +154,7 @@ exports.delete = async (req, res, next) => {
 		}
 
 		// DELETE LIKE
-		poster = await Account.findOneAndUpdate({"posts.uniqid": req.params.post}, { $pull: query }, {lean: true, new: true});
+		poster = await Account.findOneAndUpdate({ "posts.uniqid": req.params.post }, { $pull: query }, { runValidators: true, lean: true, new: true });
 		if (!poster) return res.status(422).send({ message: { dislike: "Cannot dislike" } });
 
 		return res.status(204).send({});
