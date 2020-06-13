@@ -6,7 +6,8 @@ module.exports = (app, handlers, middleware) => {
 		publish,
 		comment,
 		like,
-		share
+		share,
+		pub
 	} = handlers;
 
 	app.get("/", (req, res, next) => {
@@ -17,6 +18,7 @@ module.exports = (app, handlers, middleware) => {
 	app.post("/signup", auth.signup);
 	app.post("/signin", auth.signin);
 	app.post("/share/:uniqid", middleware.jwt, middleware.uniqid, share.post);
+	app.get("/pub/:uniqid", middleware.jwt, middleware.uniqid, pub.get);
 
 	// PROFILE ROUTES
 	app.route("/u/(:uniqid)?")

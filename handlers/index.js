@@ -6,4 +6,5 @@ module.exports = {
 	comment: require("./comment"),
 	like: require("./like"),
 	share: require("./share"),
+	pub: require("./pub")
 };

@@ -6,7 +6,8 @@ exports.get = async (req, res, next) => {
 		let profile = await Account.findOne({ uniqid: req.params.uniqid }, { _id: 0, uniqid: 1 }, { lean: true });
 		if (!profile) return res.status(404).send({ message: { profile: "This profile do not exists" } });
 
-		profile = await Account.getProfile(req.params.uniqid, req.header("u"), );
+		// GET THE PARSED PROFILE OBJ
+		profile = await Account.getProfile(req.params.uniqid, req.header("u"), 6);
 
 		return res.status(200).send(profile);
 		

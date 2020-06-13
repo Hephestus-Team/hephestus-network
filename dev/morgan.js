@@ -49,6 +49,7 @@ function parseRoute(uri){
 		comment: "COMMENT",
 		like: "LIKE",
 		add: "FRIENDSHIP",
+		pub: "PUBLICATIONS"
 	};
 
 	let match = uri.match(/^[/]$|[^/]+(?:(?!\/)*)/);
