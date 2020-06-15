@@ -1,4 +1,4 @@
-let Account = require("../models/account"), passport = require("passport");
+let Account = require("../../models/account"), passport = require("passport");
 
 exports.signup = async (req, res, next) => {
 	// TRY-CATCH BLOCK TO CATCH ANY MONGO DRIVER EXCEPTION
@@ -64,7 +64,7 @@ exports.signup = async (req, res, next) => {
 	// });
 };
 
-exports.signin = (req, res, next) => {
+exports.login = (req, res, next) => {
 	passport.authenticate("local", { session: false }, async (err, account, info) => {
         
 		if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }

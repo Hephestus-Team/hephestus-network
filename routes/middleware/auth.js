@@ -1,4 +1,4 @@
-const passport = require("passport"), strategy = require("../strategies"), Account = require("../models/account");
+const passport = require("passport"), strategy = require("../../passport"), Account = require("../../models/account");
 
 passport.use(strategy.signin);
 passport.use(strategy.jwt);

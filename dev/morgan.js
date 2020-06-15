@@ -41,14 +41,13 @@ function parseArray(values){
 
 function parseRoute(uri){
 	let routes = {
-		u: "PROFILE",
-		signin: "SIGNIN",
+		accounts: "ACCOUNTS",
+		login: "LOGIN",
 		signup: "SIGNUP",
-		share: "SHARE",
-		publish: "PUBLISH",
-		comment: "COMMENT",
-		like: "LIKE",
-		add: "FRIENDSHIP",
+		posts: "POSTS",
+		comments: "COMMENTS",
+		likes: "LIKES",
+		friendships: "FRIENDSHIPS",
 		pub: "PUBLICATIONS"
 	};
 

@@ -1,5 +1,4 @@
 const bcrypt = require("bcrypt"), uniqid = require("uniqid"), jwt = require("jsonwebtoken"), { mongo: mongoConfig, jwt: jwtConfig } = require("../../credentials/cfg");
-const { Friendship } = require("./subdocument");
 
 module.exports = {
 	// AUTH
@@ -130,7 +129,7 @@ module.exports = {
 					$project: { index: { $indexOfArray: ["$posts.likes.user", user] } }
 				}],
 				"comments": [{
-					$match: { "posts.uniqid": post }
+					$match: { "posts.comments.uniqid": comment }
 				}, {
 					$unwind: { path: "$posts" }
 				}, {
@@ -287,8 +286,8 @@ module.exports = {
 				posts[0].posts.forEach(post => {
 					post.original = originals.find(original => original.uniqid === post.original);
 				});
-
-				let parsedPosts = posts[0].posts.concat(posts[1].posts);
+				
+				let parsedPosts = (posts[1]) ? posts[0].posts.concat(posts[1].posts) : posts[0].posts;
 
 				return parsedPosts;
 			}

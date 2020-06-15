@@ -1,18 +1,15 @@
-let Account = require("../models/account");
+let Account = require("../../models/account");
 
 exports.get = async (req, res, next) => {
 	try {
-		// CHECK IF THE PROFILE EXISTS
-		let profile = await Account.findOne({ uniqid: req.params.uniqid }, { _id: 0, uniqid: 1 }, { lean: true });
-		if (!profile) return res.status(404).send({ message: { profile: "This profile do not exists" } });
 
 		// GET THE PARSED PROFILE OBJ
-		profile = await Account.getProfile(req.params.uniqid, req.header("u"), 6);
+		let profile = await Account.getProfile(req.params.user, req.header("u"), 6);
 
 		return res.status(200).send(profile);
 		
 	} catch (err) {
-		console.log(err); return res.status(500).send({ message: { database: "Internal error" } });
+		return next(err);
 	}
 };
 
@@ -49,6 +46,6 @@ exports.patch = async (req, res, next) => {
 		return res.status(201).send({ message: { profile: "Saved" } });
 
 	} catch (err) {
-		console.log(err); return res.status(500).send({ message: { database: "Internal error" } });
+		next(err);
 	}
 };
