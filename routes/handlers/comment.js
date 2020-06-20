@@ -2,26 +2,22 @@ let Account = require("../../models/account");
 
 exports.post = async (req, res, next) => {
 	try {
-
 		// GET POST
-		let post = res.locals.post;
-
-		// GET USER NAME
-		let user = await Account.findOne({ uniqid: req.header("u") }, { _id: 0, first_name: 1, last_name: 1 }, { lean: true });
-		let userName = user.first_name + " " + user.last_name;
+		let post = res.locals.params["post"];
 
 		// BUILD COMMENT OBJECT
 		let comment = {
 			uniqid: Account.setUniqid("post"),
 			content: req.body.content,
-			user: req.header("u"),
-			name: userName
+			user: res.locals.user["user"],
+			name: res.locals.user["name"]
 		};
 
-		// IF HAS req.params.comment, PROCCED WITH NEXT HANDLER
-		if (req.params.comment) {
-			res.locals.commentObj = comment;
-			return next();
+		// IF HAS req.params.comment IT IS A REPLY, PROCCED WITH NEXT HANDLER
+		if (req.params.comment) { 
+			comment.is_reply = true;
+			res.locals.commentObj = comment; 
+			return next(); 
 		}
 
 		// SAVE COMMENT
@@ -43,12 +39,11 @@ exports.post = async (req, res, next) => {
 exports.reply = async (req, res, next) => {
 	try {
 		// GET ORIGINAL COMMENT, NEW COMMENT AND POST
-		let comment = res.locals.comment;
+		let comment = res.locals.params["comment"];
+		let post = res.locals.params["post"];
 		let commentObj = res.locals.commentObj;
-		let post = res.locals.post;
 	
-		// SET NEW PROPERTIES IN THE REPLY
-		commentObj.is_reply = true;
+		// SET REPLY METADATA
 		commentObj.replyMetadata = {
 			user: comment.user,
 			name: comment.name,
@@ -65,14 +60,15 @@ exports.reply = async (req, res, next) => {
 		return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 
 	} catch (err) {
-		next(err);
+		return next(err);
 	}
 };
 
 exports.patch = async (req, res, next) => {
 	try {
-		let post = res.locals.post;
-		let comment = res.locals.comment;
+		// GET POST AND COMMENT
+		let post = res.locals.params["post"];
+		let comment = res.locals.params["comment"];
 
 		// BUILD QUERY
 		let commentIndex = await Account.getIndex("comments", { post: post.uniqid, comment: comment.uniqid });
@@ -88,32 +84,28 @@ exports.patch = async (req, res, next) => {
 		}
 
 		// UPDATE COMMENT
-		let account = await Account.findOneAndUpdate({ uniqid: post.poster, "posts.uniqid": post.uniqid }, { $set: { [queryContent]: req.body.content }, $push: { [queryHistory]: old_comment } }, { runValidators: true, new: true });
+		let account = await Account.findOneAndUpdate({ uniqid: post.poster, "posts.uniqid": post.uniqid }, { $set: { [queryContent]: req.body.content }, $push: { [queryHistory]: old_comment } }, { runValidators: true, new: true, lean: true });
 		if (account.nModified === 0) return res.status(422).send({ message: { comment: "Cannot update this comment" } });
 
 		let postIndex = await Account.getIndex("posts", { post: post.uniqid });
-		commentIndex = await Account.getIndex("comments", { post: post.uniqid, comment: comment.uniqid });
 
 		return res.status(200).send(account.posts[postIndex].comments[commentIndex]);
 
 	} catch (err) {
-		next(err);
+		return next(err);
 	}
 
 };
 
 exports.delete = async(req, res, next) => {
 	try {
-		let post = res.locals.post;
-		let comment = res.locals.comment;
-
-		// BUILD QUERY
-		let queryProperty = "posts.$.comments";
-		let query = { [queryProperty]: { uniqid: comment.uniqid } };
+		// GET POST AND COMMENT
+		let post = res.locals.params["post"];
+		let comment = res.locals.params["comment"];
 
 		// DELETE COMMENT
-		comment = await Account.findOneAndUpdate({ uniqid: post.poster, "posts.uniqid": post.uniqid }, { $pull: query }, { runValidators: true, new: true, lean: true });
-		if (comment.nModified === 0) return res.status(400).send({ message: { comment: "Cannot delete this comment" } });
+		let account = await Account.findOneAndUpdate({ uniqid: post.poster, "posts.uniqid": post.uniqid }, { $pull: { "posts.$.comments": { uniqid: comment.uniqid } } }, { runValidators: true, new: true, lean: true });
+		if (account.nModified === 0) return res.status(400).send({ message: { comment: "Cannot delete this comment" } });
 
 		return res.status(204).send();
 

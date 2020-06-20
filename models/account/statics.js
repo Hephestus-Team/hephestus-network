@@ -221,6 +221,38 @@ module.exports = {
 			return console.log(err);
 		}
 	},
+	parseOnePost: async function (postUniqid, userUniqid){
+		//BUILD PIPELINES
+		let pipelines = [{
+			$match: {
+				"posts.uniqid": postUniqid
+			}
+		}, {
+			"$unwind": {
+				"path": "$posts"
+			}
+		}, {
+			"$match": {
+				"posts.uniqid": postUniqid
+			}
+		}, {
+			"$addFields": {
+				"posts.user": "$uniqid",
+				"posts.name": { "$concat": ["$first_name", " ", "$last_name"] },
+				"posts.is_liked": {
+					"$cond": { "if": { "$in": [userUniqid, "$posts.likes.user"] }, "then": true, "else": false }
+				}
+			}
+		}, {
+			"$project": { "_id": 0, "post": "$posts" }
+		}];
+
+		let post = (await this.aggregate(pipelines))[0];
+
+		if(post.is_share) await this.getOriginalPost(post.uniqid);
+
+		return post;
+	},
 	parsePosts: async function (profileUniqid, userUniqid, relationship, {bottomLimit, fixedQuantity}) {
 		try {
 			// BUILD PIPELINES

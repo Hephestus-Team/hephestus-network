@@ -3,7 +3,7 @@ let Account = require("../../models/account");
 exports.get = async (req, res, next) => {
 	try {
 		// GET ACCOUNT
-		let user = res.locals.user;
+		let user = res.locals.params["user"];
 
 		// VALIDATE Q PARAM
 		if(!req.query.q || Number(req.query.q) <= 0) return res.status(400).send({ message: { query: "The limit must be a positive integer" } });

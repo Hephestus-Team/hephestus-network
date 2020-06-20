@@ -9,77 +9,82 @@ exports.post = async (req, res, next) => {
 		};
 
 		// IF HAS req.params.post ITS A SHARE, GO NO NEXT HANDLER
-		if (req.params.post) { res.locals.postObj = post; return next(); }
+		if (req.params.post) {
+			post.is_share = true;
+			res.locals.postObj = post;
+			return next();
+		}
 
 		// SAVE POST
-		let poster = await Account.findOneAndUpdate({ uniqid: req.header("u") }, { $push: { posts: post } }, { runValidators: true, lean: true, new: true, setDefaultsOnInsert: true });
-		if (!poster) return res.status(422).send({ message: { publish: "Cannot publish this post" } });
+		let account = await Account.findOneAndUpdate({ uniqid: res.locals.user["uniqid"] }, { $push: { posts: post } }, { runValidators: true, lean: true, new: true, setDefaultsOnInsert: true });
+		if (account.nModified === 0) return res.status(422).send({ message: { publish: "Cannot publish this post" } });
 
 		// GET NEW POST AND SET poster PROPERTY
-		let postIndex = await Account.getIndex("posts", { post: post.uniqid });
-		poster.posts[postIndex].poster = req.header("u");
+		// let postIndex = await Account.getIndex("posts", { post: post.uniqid });
+		// account.posts[postIndex].poster = res.locals.user["uniqid"];
+
+		let postCreated = await Account.parseOnePost(post.uniqid, res.locals.user["uniqid"]);
 	
-		return res.status(200).send(poster.posts[postIndex]);
+		return res.status(200).send(postCreated);
 
 	} catch (err) {
-		console.log(err); return res.status(500).send({ message: { server: "Internal error" } });
+		return next(err);
 	}
 
 };
 
 exports.share = async (req, res, next) => {
 	try {
-		// GET ORIGINAL POST
-		let post = res.locals.post;
+		// GET REFERRER POST
+		let post = res.locals.params["post"];
 		let postObj = res.locals.postObj;
 
-		// BUILD SHAREMETADATA & QUERY OBJ
-		// IF THE REFERRER POST IS A SHARE, USE THE REFERRER OWN METADATA AND BUILD QUERY TO SAVE THE SHARE IN THE ORIGINAL SHARES ARRAY
-		// ELSE USE THE REFERRER UNIQID IN PARAMS, AND SAVE THE SHARE IN THE REFERRER SHARES ARRAY
-		let shareMetadata, query;
+		// IF THE REFERRER POST IS A SHARE, USE THE REFERRER OWN METADATA TO RETRIEVE THE ORIGINAL POST
+		// ELSE USE THE REFERRER UNIQID, AND SAVE THE SHARE IN THE REFERRER SHARES ARRAY
+		let query;
 
 		if(post.is_share){
-			shareMetadata = post.shareMetadata;
-			query = { uniqid: shareMetadata.user, "posts.uniqid": shareMetadata.post };
-
+			postObj.shareMetadata = post.shareMetadata;
+			query = { uniqid: post.shareMetadata.user, "posts.uniqid": post.shareMetadata.post };
 		}else{
-			shareMetadata = { user: post.poster, name: post.name, post: req.params.post };
+			postObj.shareMetadata = { user: post.poster, name: post.name, post: post.uniqid };
 			query = { uniqid: post.poster, "posts.uniqid": post.uniqid };
 		}
 
-		postObj.shareMetadata = shareMetadata;
-		postObj.is_share = true;
-
-		// BUILD SHARE OBJ TO USE IN SHARES ARRAY IN ORIGINAL POST
-		let sharer = await Account.findOne({ uniqid: req.header("u") }, { _id: 0, first_name: 1, last_name: 1 }, { lean: true });
-		let sharerName = sharer.first_name + " " + sharer.last_name;
-
+		// BUILD SHARE OBJ
 		let shareObj = {
-			user: req.header("u"),
-			name: sharerName,
+			user: res.locals.user["uniqid"],
+			name: res.locals.user["name"],
 			post: postObj.uniqid,
 			created_at: new Date()
 		};
 
-		// SAVE SHARE IN ORIGINAL SHARES ARRAY
-		let original = await Account.findOneAndUpdate(query, { $push: { "posts.$.shares": shareObj } }, { runValidators: true, new: true, setDefaultsOnInsert: true });
+		// SAVE SHARE OBJ IN ORIGINAL SHARES ARRAY
+		let original = await Account.findOneAndUpdate(query, { $push: { "posts.$.shares": shareObj } }, { projection: { _id: 0, posts: 1 }, runValidators: true, new: true, setDefaultsOnInsert: true });
 		if (original.nModified === 0) return res.status(422).send({ message: { share: "Cannot share this post" } });
 
-		// SAVE SHARED POST
-		let share = await Account.findOneAndUpdate({ uniqid: req.header("u") }, { $push: { "posts": postObj } }, { runValidators: true, lean: true, new: true, setDefaultsOnInsert: true });
+		// SAVE POST OBJ IN USER POSTS ARRAY
+		let share = await Account.findOneAndUpdate({ uniqid: res.locals.user["uniqid"] }, { $push: { "posts": postObj } }, { projection: { _id: 0, posts: 1 }, runValidators: true, lean: true, new: true, setDefaultsOnInsert: true });
 		if (share.nModified === 0) return res.status(422).send({ message: { share: "Cannot share this post" } });
 
-		// GET SHARE OBJ AND SET POSTER
-		let shareIndex = await Account.getIndex("posts", { post: postObj.uniqid });
+		// original = original.posts[0];
+		// share = share.posts[0];
+		// share.original = {
+		// 	name: `${original.first_name} ${original.last_name}`,
+		// 	user: original.uniqid,
+		// 	content: original.posts[0].content,
+		// 	uniqid: original.posts[0].uniqid,
+		// 	created_at: original.posts[0].created_at
+		// };
 
-		share = share.posts[shareIndex];
-		share.poster = req.header("u");
-		share.original = post;
+		let { sharedPost } = await Account.parseOnePost(shareObj.uniqid, res.locals.user["uniqid"]);
+		
+		sharedPost.original = await Account.getOriginalPost(sharedPost);
 
-		return res.status(200).send(share);
+		return res.status(200).send(sharedPost);
 
 	} catch (err) {
-		next(err);
+		return next(err);
 	}
 };
 
@@ -144,9 +149,8 @@ exports.get = async (req, res, next) => {
 
 exports.patch = async (req, res, next) => {
 	try {
-
 		// GET POST
-		let post = res.locals.post;
+		let post = res.locals.params["post"];
 		
 		// PARSE POST OBJ
 		let old_post = { content: post.content, modified_at: new Date() };
@@ -157,28 +161,32 @@ exports.patch = async (req, res, next) => {
 		}
 
 		// UPDATE POST
-		let account = await Account.findOneAndUpdate({ uniqid: req.header("u"), "posts.uniqid": post.uniqid }, { $set: { "posts.$.content": req.body.content }, $push: { "posts.$.history": old_post } }, { runValidators: true, new: true, lean: true });
+		let account = await Account.findOneAndUpdate({ uniqid: res.locals.user["uniqid"], "posts.uniqid": post.uniqid }, { $set: { "posts.$.content": req.body.content }, $push: { "posts.$.history": old_post } }, { projection: { _id: 0, posts: 1 }, runValidators: true, new: true, lean: true });
 		if (account.nModified === 0) return res.status(422).send({ message: { post: "Cannot update this post" } });
-
-		if(post.is_share) post.original = await Account.getOriginalPost(post.uniqid);
-		let postIndex = await Account.getIndex("posts", { post: post.uniqid });
 		
-		return res.status(200).send(account.posts[postIndex]);
+		// post = account.posts[0];
+		let { postEdited } = await Account.parseOnePost(post.uniqid, res.locals.user["uniqid"]);
+
+		if(post.is_share) postEdited.original = await Account.getOriginalPost(post.uniqid);
+		
+		return res.status(200).send(postEdited);
 
 	} catch (err) {
-		next(err);
+		return next(err);
 	}
 };
 
 exports.delete = async (req, res, next) => {
 	try {
+		// GET POST
+		let post = res.locals.params["post"];
 
 		// DELETE POST
-		let post = await Account.findOneAndUpdate({ uniqid: req.header("u"), "posts.uniqid": req.params.post }, { $pull: { "posts": { "uniqid": req.params.post } } }, { runValidators: true, lean: true });
-		if (post.nModified === 0) return res.status(422).send({ message: { delete: "Cannot perform this action" } });
+		let account = await Account.findOneAndUpdate({ uniqid: res.locals.user["uniqid"], "posts.uniqid": post.uniqid }, { $pull: { posts: { uniqid: post.uniqid } } }, { runValidators: true, lean: true });
+		if (account.nModified === 0) return res.status(422).send({ message: { delete: "Cannot perform this action" } });
 
 		return res.status(204).send();
 	} catch (err) {
-		next(err);
+		return next(err);
 	}
 };

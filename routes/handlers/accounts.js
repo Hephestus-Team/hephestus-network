@@ -13,6 +13,7 @@ exports.get = async (req, res, next) => {
 	}
 };
 
+// NEED REVIEW !!
 exports.patch = async (req, res, next) => {
 	// SET DICTIONARY TO PARSE/VALIDATE THE RESPONSE BODY
 	let selfProfile = Boolean(req.header("u") === req.params.uniqid);

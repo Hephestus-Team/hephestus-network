@@ -7,7 +7,7 @@ module.exports = {
 
 			if(!userExists) return res.status(404).send({ message: { user: "This user does not exists" } });
 
-			res.locals.user = userExists;
+			res.locals.params["user"] = userExists;
 
 			return next();
 		} catch (err) {
@@ -25,7 +25,7 @@ module.exports = {
 			post.name = postExists.first_name + " " + postExists.last_name;
 			post.poster = postExists.uniqid;
 	
-			res.locals.post = post;
+			res.locals.params["post"] = post;
 			
 			return next();
 		} catch (err) {
@@ -41,7 +41,7 @@ module.exports = {
 			let commentIndex = await Account.getIndex("comments", { post: null, comment: req.params.comment, user: null, friendship: null }); 
 			let comment = commentExists.posts[0].comments[commentIndex];
 	
-			res.locals.comment = comment;
+			res.locals.params["comment"] = comment;
 	
 			return next();
 		} catch (err) {
