@@ -41,10 +41,10 @@ exports.post = async (req, res, next) => {
 
 		// SAVE FRIENDSHIPS
 		let receiverAccount = await Account.findOneAndUpdate({ uniqid: receiver.uniqid }, { $push: { friendships: receiverFriendship } }, { new: true, setDefaultsOnInsert: true, lean: true });
-		if (receiverAccount.nModified === 0) return res.status(422).send({ message: { friendship: "Cannot send a friendship request for the user" } });
+		if (receiverAccount.nModified === 0 || receiverAccount === null) return res.status(422).send({ message: { friendship: "Cannot send a friendship request for the user" } });
 
 		let senderAccount = await Account.findOneAndUpdate({ uniqid: res.locals.user["uniqid"] }, { $push: { friendships: senderFriendship } }, { new: true, setDefaultsOnInsert: true, lean: true });
-		if (senderAccount.nModified === 0) return res.status(422).send({ message: { friendship: "Cannot send a friendship request for the user" } });
+		if (senderAccount.nModified === 0 || senderAccount === null) return res.status(422).send({ message: { friendship: "Cannot send a friendship request for the user" } });
 
 		return res.status(201).send({ message: { friendship: "Friendship request sended" } });
 	
@@ -65,7 +65,7 @@ exports.patch = async (req, res, next) => {
 
 		// UPDATE REQUEST
 		let account = await Account.updateMany({ "friendships.uniqid": friendship.uniqid }, { $set: { "friendships.$.is_accepted": true }, $unset: { "friendships.$.is_sender": "" } }, { runValidators: true, new: true, lean: true });
-		if (account.nModified === 0) return res.status(422).send({ message: { friendship: "Cannot accept this friendship request" } });
+		if (account.nModified === 0 || account === null) return res.status(422).send({ message: { friendship: "Cannot accept this friendship request" } });
 
 		return res.status(201).send({ message: { friendship: "Now you are friends" } });
 
@@ -85,7 +85,7 @@ exports.delete = async (req, res, next) => {
 
 		// UPDATE REQUEST
 		let request = await Account.updateMany({ "friendships.uniqid": friendship.uniqid }, { $pull: { friendships: { uniqid: friendship.uniqid } } }, { runValidators: false, lean: true, new: true });
-		if (request.nModified === 0) return res.status(422).send({ message: { friendship: "Cannot refuse this friendship request" } });
+		if (request.nModified === 0 || request === null) return res.status(422).send({ message: { friendship: "Cannot refuse this friendship request" } });
 
 		return res.status(204).send();
 

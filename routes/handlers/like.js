@@ -114,7 +114,7 @@ exports.delete = async (req, res, next) => {
 
 		// DELETE LIKE
 		let account = await Account.findOneAndUpdate({ "posts.uniqid": post.uniqid }, { $pull: query }, { runValidators: true, lean: true, new: true });
-		if (account.nModified === 0) return res.status(422).send({ message: { dislike: "Cannot dislike" } });
+		if (account.nModified === 0 || account === null) return res.status(422).send({ message: { dislike: "Cannot dislike" } });
 
 		return res.status(204).send();
 		

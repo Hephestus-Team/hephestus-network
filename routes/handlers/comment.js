@@ -85,7 +85,7 @@ exports.patch = async (req, res, next) => {
 
 		// UPDATE COMMENT
 		let account = await Account.findOneAndUpdate({ uniqid: post.poster, "posts.uniqid": post.uniqid }, { $set: { [queryContent]: req.body.content }, $push: { [queryHistory]: old_comment } }, { runValidators: true, new: true, lean: true });
-		if (account.nModified === 0) return res.status(422).send({ message: { comment: "Cannot update this comment" } });
+		if (account.nModified === 0 || account === null) return res.status(422).send({ message: { comment: "Cannot update this comment" } });
 
 		let postIndex = await Account.getIndex("posts", { post: post.uniqid });
 

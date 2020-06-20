@@ -20,7 +20,7 @@ module.exports = {
 			delete account.first_name;
 			delete account.last_name;
 
-			res.locals.user = { account };
+			res.locals.user = account;
 			res.locals.params = {};
 
 			return next();

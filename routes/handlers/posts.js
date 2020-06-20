@@ -17,7 +17,7 @@ exports.post = async (req, res, next) => {
 
 		// SAVE POST
 		let account = await Account.findOneAndUpdate({ uniqid: res.locals.user["uniqid"] }, { $push: { posts: post } }, { runValidators: true, lean: true, new: true, setDefaultsOnInsert: true });
-		if (account.nModified === 0) return res.status(422).send({ message: { publish: "Cannot publish this post" } });
+		if (account.nModified === 0 || account === null) return res.status(422).send({ message: { publish: "Cannot publish this post" } });
 
 		// GET NEW POST AND SET poster PROPERTY
 		// let postIndex = await Account.getIndex("posts", { post: post.uniqid });
@@ -61,11 +61,11 @@ exports.share = async (req, res, next) => {
 
 		// SAVE SHARE OBJ IN ORIGINAL SHARES ARRAY
 		let original = await Account.findOneAndUpdate(query, { $push: { "posts.$.shares": shareObj } }, { projection: { _id: 0, posts: 1 }, runValidators: true, new: true, setDefaultsOnInsert: true });
-		if (original.nModified === 0) return res.status(422).send({ message: { share: "Cannot share this post" } });
+		if (original.nModified === 0 || original === null) return res.status(422).send({ message: { share: "Cannot share this post" } });
 
 		// SAVE POST OBJ IN USER POSTS ARRAY
 		let share = await Account.findOneAndUpdate({ uniqid: res.locals.user["uniqid"] }, { $push: { "posts": postObj } }, { projection: { _id: 0, posts: 1 }, runValidators: true, lean: true, new: true, setDefaultsOnInsert: true });
-		if (share.nModified === 0) return res.status(422).send({ message: { share: "Cannot share this post" } });
+		if (share.nModified === 0 || share === null) return res.status(422).send({ message: { share: "Cannot share this post" } });
 
 		// original = original.posts[0];
 		// share = share.posts[0];
@@ -162,7 +162,7 @@ exports.patch = async (req, res, next) => {
 
 		// UPDATE POST
 		let account = await Account.findOneAndUpdate({ uniqid: res.locals.user["uniqid"], "posts.uniqid": post.uniqid }, { $set: { "posts.$.content": req.body.content }, $push: { "posts.$.history": old_post } }, { projection: { _id: 0, posts: 1 }, runValidators: true, new: true, lean: true });
-		if (account.nModified === 0) return res.status(422).send({ message: { post: "Cannot update this post" } });
+		if (account.nModified === 0 || account === null) return res.status(422).send({ message: { post: "Cannot update this post" } });
 		
 		// post = account.posts[0];
 		let { postEdited } = await Account.parseOnePost(post.uniqid, res.locals.user["uniqid"]);
