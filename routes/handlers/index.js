@@ -1,9 +1,8 @@
 module.exports = { 
 	auth: require("./auth"),
 	accounts: require("./accounts"),
-	friendships: require("./friendship"),
+	friendships: require("./friendships"),
 	posts: require("./posts"),
-	comments: require("./comment"),
-	likes: require("./like"),
-	pub: require("./pub")
+	comments: require("./comments"),
+	likes: require("./likes")
 };

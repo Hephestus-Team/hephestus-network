@@ -1,55 +1,52 @@
-let Account = require("../../models/account"), passport = require("passport");
+const { Logins, Users, Posts, Friendships } = require("../../collections");
 
 exports.signup = async (req, res, next) => {
-	// TRY-CATCH BLOCK TO CATCH ANY MONGO DRIVER EXCEPTION
 	try {
 
-		let account = await Account.findOne({ email: req.body.email }, { lean: true });
-		if (account) return res.status(409).send({ message: { email: "User already exists" } });
+		// CHECK IF EMAIL IS ALREADY REGISTRED
+		let userAlreadyExists = await Logins.findOne({ email: req.body.email }, { lean: true });
+		if (userAlreadyExists) return res.status(409).send({ message: { email: "User already exists" } });
 
-	} catch (err) {
-		return next(err);
-	}
-
-	// TRY-CATCH BLOCK TO CATCH ANY MONGOOSE EXCEPTION
-	try {
-
-		let newUser = new Account({
-			uniqid: Account.setUniqid("user"),
+		let user = new Users({
+			uniqid: Users.uniqid(),
 			first_name: req.body.first_name,
 			last_name: req.body.last_name,
-			email: req.body.email,
 			gender: req.body.gender,
-			birthday: new Date(req.body.birthday),
-			hash: Account.setHash(req.body.hash)
+			birthday: new Date(req.body.birthday)
 		});
 
-		await newUser.save();
+		let login = new Logins({
+			uniqid: user.uniqid,
+			email: req.body.email,
+			hash: req.body.hash
+		});
+
+		// SAVE USER IN USERS AND LOGINS COLLECTION
+		await user.save();
+		await login.save();
 
 		return res.status(201).send({ message: { user: "You are now part of the community" } });
 
 	} catch (err) {
-
-		let errorsName = Object.getOwnPropertyNames(err.errors);
-		let errors = [];
-
-		errorsName.forEach(error => {
-			errors.push({
-				path: err.errors[error].path,
-				message: err.errors[error].message
-			});
-		});
-
-		next(errors);
+		return next(err);
 	}
 };
 
-exports.login = (req, res, next) => {
-	passport.authenticate("local", { session: false }, async (err, account, info) => {
-        
-		if(err) { console.log(err); return res.status(500).send({ message: { database: "Internal error" } }); }
-		if(!account) { return res.status(401).send(info); }
-        
-		return res.status(201).send(info);
-	})(req,res,next);
+exports.login = async (req, res, next) => {
+	try {
+		// CHECK IF EMAIL EXISTS IN LOGINS COLLECTION
+		let user = await Logins.findOne({ email: req.body.email }, { _id: 0, hash: 1, uniqid: 1 }, { lean: true });
+		if (!user) return res.status(401).send({ message: { email: "This user does not exists" } });
+
+		// CHECK IF THE PASSWORD MATCHES
+		if (!Logins.checkPassword(req.body.hash, user["hash"])) return res.status(401).send({ message: { password: "Wrong password" } });
+
+		// GET LOGIN OBJ
+		let login = await Users.getUser(user["uniqid"], { parseFriendships: 1, setJWT: 1 });
+
+		return res.status(200).send(login);
+
+	} catch (err) {
+		return next(err);
+	}
 };

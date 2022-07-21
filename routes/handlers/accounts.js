@@ -1,11 +1,15 @@
-let Account = require("../../models/account");
+const { Logins, Users, Posts, Friendships } = require("../../collections");
 
-exports.get = async (req, res, next) => {
+exports.getOne = async (req, res, next) => {
 	try {
 
-		// GET THE PARSED PROFILE OBJ
-		let profile = await Account.getProfile(req.params.user, req.header("u"), 6);
+		// GET REFERRER & USER DATA
+		let referrer = res.locals.params["user"];
+		let user = res.locals.user;
 
+		// GET PROFILE OBJECT
+		let profile = await Users.getProfile(referrer["uniqid"], user["uniqid"]);
+		
 		return res.status(200).send(profile);
 		
 	} catch (err) {
@@ -14,7 +18,7 @@ exports.get = async (req, res, next) => {
 };
 
 // NEED REVIEW !!
-exports.patch = async (req, res, next) => {
+exports.edit = async (req, res, next) => {
 	// SET DICTIONARY TO PARSE/VALIDATE THE RESPONSE BODY
 	let selfProfile = Boolean(req.header("u") === req.params.uniqid);
 

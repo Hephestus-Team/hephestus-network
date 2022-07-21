@@ -1,33 +1,35 @@
-const Account = require("../../models/account");
+const { Logins, Users, Posts, Friendships } = require("../../collections");
 
 module.exports = {
 	user: async (req, res, next) => {
 		try {
-			let userExists = await Account.findOne({ uniqid: req.params.user }, { _id: 0, friendships: 1, posts: 1, uniqid: 1 }, { lean: true });
+			let user = await Users.findOne({ uniqid: req.params.user }, { _id: 0, first_name: 1, last_name: 1, uniqid: 1, username: 1 }, { lean: true });
+			if(!user) return res.status(404).send({ message: { user: "This user does not exists" } });
 
-			if(!userExists) return res.status(404).send({ message: { user: "This user does not exists" } });
+			user["name"] = user["first_name"] + " " + user["last_name"];
 
-			res.locals.params["user"] = userExists;
+			delete user["first_name"];
+			delete user["last_name"];
+
+			res.locals.params["user"] = user;
 
 			return next();
+
 		} catch (err) {
 			return next(err);
 		}
 	},
 	post: async (req, res, next) => {
 		try {
-			let postExists = await Account.findOne({ "posts.uniqid": req.params.post }, { _id: 0, "posts.$": 1, uniqid: 1, first_name: 1, last_name: 1 }, { lean: true });
 
-			if(!postExists) return res.status(404).send({ message: { post: "This post does not exists" } });
-
-			let post = postExists.posts[0];
-
-			post.name = postExists.first_name + " " + postExists.last_name;
-			post.poster = postExists.uniqid;
+			// GET REFERRER POST DATA
+			let post = await Posts.findOne({ uniqid: req.params.post }, { _id: 0, uniqid: 1, name: 1, poster: 1, shareMetadata: 1, is_share: 1 }, { lean: true });
+			if(!post) return res.status(404).send({ message: { post: "This post does not exists" } });
 	
 			res.locals.params["post"] = post;
 			
 			return next();
+
 		} catch (err) {
 			return next(err);
 		}
@@ -44,6 +46,21 @@ module.exports = {
 			res.locals.params["comment"] = comment;
 	
 			return next();
+		} catch (err) {
+			return next(err);
+		}
+	},
+	friendship: async (req, res, next) => {
+		try {
+			
+			// GET FRIENDSHIP DATA
+			let friendship = await Friendships.findOne({ uniqid: req.params.friendship }, { lean: true });
+			if (!friendship) return res.status(404).send({ message: { friendship: "This friendship request does not exists" } });
+
+			res.locals.params["friendship"] = friendship;
+
+			return next();
+
 		} catch (err) {
 			return next(err);
 		}

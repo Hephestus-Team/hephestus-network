@@ -1,41 +1,23 @@
-const passport = require("passport"), strategy = require("../../passport"), Account = require("../../models/account");
+const { Logins, Users } = require("../../collections");
 
-passport.use(strategy.signin);
-passport.use(strategy.jwt);
+module.exports = async (req, res, next) => {
+	try {
+		// CHECK IF JWT IS CORRECT
+		let jwtRegex = /^[Bearer ]+[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]*$/;
+		if(!req.header("Authorization") || !req.header("Authorization").match(jwtRegex)) return res.status(401).send({ message: { permission: "Invalid token" } });
+		
+		// CHECK JWT & UNIQID
+		let jwtAndUniqidMatches = await Logins.checkJwt(req.header("Authorization"), req.header("u"));
+		if (!jwtAndUniqidMatches) return res.status(401).send({ message: { permission: "Invalid token" } });
 
-module.exports = {
-	uniqid: async function(req, res, next){
+		// BUILD USER OBJ
+		res.locals.user = await Users.getUser(req.header("u"), { parseFriendships: 1 });
 
-		try {
-			// GET THE MONGODB USER ID BY THE JWT
-			let _id = Account.getJwtPayload(req.header("Authorization"));
+		res.locals.params = {};
 
-			// CHECK IF THE ID MATCHES WITH THE USER UNIQID
-			let account = await Account.findOne({ $and: [{ _id: _id }, { uniqid: req.header("u") }] }, { _id: 0, uniqid: 1, first_name: 1, last_name: 1 }, { lean: true });
-			if (!account) return res.status(401).send({ message: { user: "Cannot perform this action" } });
+		return next();
 
-			// BUILD NAME
-			account.name = `${account.first_name} ${account.last_name}`;
-
-			delete account.first_name;
-			delete account.last_name;
-
-			res.locals.user = account;
-			res.locals.params = {};
-
-			return next();
-			
-		} catch (err) {
-			console.log(err); return res.status(500).send({ message: { server: "Internal error" } });
-		}
-
-	},    
-	jwt: (req, res, next) => {
-		passport.authenticate("jwt", { session: false }, (err, account, info) => {
-			if(err) { return res.status(500).send(err); }
-			if(!account) { return res.status(401).send(info); }
-            
-			return next();
-		})(req, res, next);
+	} catch (err) {
+		return next(err);
 	}
 };

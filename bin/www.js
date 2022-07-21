@@ -1,6 +1,9 @@
-const app = require("../app"), https = require("https"), 
-	mongoose = require("mongoose"), fs = require("fs"), 
-	path = require("path"), websocket = require("../websocket"), http = require("http");
+const app = require("../app");
+const https = require("https");
+const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
+const { mongo: mongoConfig, jwt: jwtConfig } = require("../credentials/cfg");
 
 app.set("port", normalizePort(process.env.PORT || "3333"));
 app.set("env", process.env.ENV || "development");
@@ -10,19 +13,16 @@ const options = {
 	cert: fs.readFileSync(path.join(__dirname, "..\\credentials\\ssl\\certificate.pem")).toString()
 };
 
-let server = https.createServer(options, app);
-
-mongoose.connect(require("../credentials/cfg").mongo.uri, require("../credentials/cfg").mongo.options, (err) => {
-	if(err) console.log(`Mongoose connection error <${err}>`);
-});
-
-// Socket.IO server-side system, in process..
-// websocket(server);
-
-server.listen(app.get("port"), () => {
+https.createServer(options, app).listen(app.get("port"), () => {
 	console.log("API server started in " + app.get("env") +
 		" mode on https://localhost:" + app.get("port") +
 		" ; press Ctrl-C to terminate.");
+
+	mongoose.connect(mongoConfig.uri, mongoConfig.options, (err) => {
+		if (err) return console.log(err);
+		return console.log("Mongoose connected");
+	});
+
 });
 
 function normalizePort(val) {
